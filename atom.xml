@@ -4,7 +4,7 @@
   <title><![CDATA[The Coding Life]]></title>
   <link href="http://hank5000.github.io/atom.xml" rel="self"/>
   <link href="http://hank5000.github.io/"/>
-  <updated>2015-06-10T16:01:33+08:00</updated>
+  <updated>2015-06-10T16:07:44+08:00</updated>
   <id>http://hank5000.github.io/</id>
   <author>
     <name><![CDATA[Hank Wu]]></name>
@@ -12,6 +12,15 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Post2]]></title>
+    <link href="http://hank5000.github.io/blog/2015/06/10/post2/"/>
+    <updated>2015-06-10T16:07:32+08:00</updated>
+    <id>http://hank5000.github.io/blog/2015/06/10/post2</id>
+    <content type="html"><![CDATA[
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[First]]></title>
