@@ -1,0 +1,4 @@
+User-agent: *
+Disallow: 
+
+Sitemap: http://hank5000.github.io/sitemap.xml 
