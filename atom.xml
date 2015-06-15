@@ -4,7 +4,7 @@
   <title><![CDATA[The Coding Life]]></title>
   <link href="http://hank5000.github.io/atom.xml" rel="self"/>
   <link href="http://hank5000.github.io/"/>
-  <updated>2015-06-15T21:42:13+08:00</updated>
+  <updated>2015-06-15T22:19:04+08:00</updated>
   <id>http://hank5000.github.io/</id>
   <author>
     <name><![CDATA[Hank Wu]]></name>
@@ -27,15 +27,6 @@
     <link href="http://hank5000.github.io/blog/2015/06/10/post2/"/>
     <updated>2015-06-10T16:07:32+08:00</updated>
     <id>http://hank5000.github.io/blog/2015/06/10/post2</id>
-    <content type="html"><![CDATA[
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[first]]></title>
-    <link href="http://hank5000.github.io/blog/2015/06/10/first/"/>
-    <updated>2015-06-10T15:51:15+08:00</updated>
-    <id>http://hank5000.github.io/blog/2015/06/10/first</id>
     <content type="html"><![CDATA[
 ]]></content>
   </entry>
