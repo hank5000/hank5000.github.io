@@ -4,7 +4,7 @@
   <title><![CDATA[The Coding Life]]></title>
   <link href="http://hank5000.github.io/atom.xml" rel="self"/>
   <link href="http://hank5000.github.io/"/>
-  <updated>2015-06-16T00:38:13+08:00</updated>
+  <updated>2015-06-16T00:49:54+08:00</updated>
   <id>http://hank5000.github.io/</id>
   <author>
     <name><![CDATA[Hank Wu]]></name>
@@ -77,24 +77,30 @@ $ git push origin source
 
 <h2>3. 使用Octopress發文/刪文</h2>
 
-<ul>
-<li><h3>發文</h3>
+<h3>發文</h3>
 
-<p>  $ rake new_post[&lsquo;文章標題&rsquo;]
-Octopress會生成個 <em>.markdown 到你的./source/_posts/ 下面，就我理解這個有點像是原始檔(Markdown Source Code)，然後你可以在 </em>.markdown中用markdown語法寫文章存檔，然後執行</p>
+<pre><code>$ rake new_post['文章標題']
+</code></pre>
 
-<p>  $ rake generate
-他會去編譯 <em>.markdown變成 </em>.html 放到 _deploy的某個目錄中，然後再執行</p>
+<p>Octopress會生成個 <em>.markdown 到你的./source/_posts/ 下面，就我理解這個有點像是原始檔(Markdown Source Code)，然後你可以在 </em>.markdown中用markdown語法寫文章存檔，然後執行</p>
 
-<p>  $ rake deploy
-他會把_deploy新增的或者是刪除的push到github做修改，在po好文章之後你只有把html的部份上傳，可是*.markdown的部分並未上傳做備份，記得再輸入</p>
+<pre><code>$ rake generate
+</code></pre>
 
-<p>  $ git add .
-or</p>
+<p>他會去編譯 <em>.markdown變成 </em>.html 放到 _deploy的某個目錄中，然後再執行</p>
 
-<p>  $ git add &ldquo;新的file path&rdquo;</p></li>
-</ul>
+<pre><code>$ rake deploy
+</code></pre>
 
+<p>他會把_deploy新增的或者是刪除的push到github做修改，在po好文章之後你只有把html的部份上傳，可是*.markdown的部分並未上傳做備份，記得再輸入</p>
+
+<pre><code>$ git add .
+</code></pre>
+
+<p>or</p>
+
+<pre><code>$ git add "新的file path"
+</code></pre>
 
 <p>then</p>
 
@@ -103,24 +109,32 @@ $ git push
 </code></pre>
 
 <ul>
-<li><h3>刪文</h3>
+<li><h3>刪文</h3></li>
+</ul>
+
 
 <p>有了剛剛些概念後應該可以大概知道，使用</p>
 
-<p>  $ rake new_post[&ldquo;post_name&rdquo;]
-他其實是幫你把 *.markdown生成到source/_posts/&hellip;，然後再透過</p>
+<pre><code>$ rake new_post["post_name"]
+</code></pre>
 
-<p>  $ rake generate
-去把html檔生成出來，也就是說如果要刪文的話，你可以到source/_posts/&hellip;，去找你想要刪掉的文章</p>
+<p>他其實是幫你把 *.markdown生成到source/_posts/&hellip;，然後再透過</p>
 
-<p>  $ rm source/_posts/XXXXXX.markdown
-然後在執行</p>
+<pre><code>$ rake generate
+</code></pre>
 
-<p>  $ rake generate
-  $ rake deploy
-這樣他就會去把在github上面的相關 html給刪除</p></li>
-</ul>
+<p>去把html檔生成出來，也就是說如果要刪文的話，你可以到source/_posts/&hellip;，去找你想要刪掉的文章</p>
 
+<pre><code>$ rm source/_posts/XXXXXX.markdown
+</code></pre>
+
+<p>然後在執行</p>
+
+<pre><code>$ rake generate
+$ rake deploy
+</code></pre>
+
+<p>這樣他就會去把在github上面的相關 html給刪除</p>
 
 <p>或者是你可以直接在*.markdown上面有一串字描述這篇文章的屬性的</p>
 
