@@ -57,7 +57,8 @@ published: true
 
 ##3. 使用Octopress發文/刪文
 
-+ ###發文
+###發文
+
 	$ rake new_post['文章標題']
 Octopress會生成個 *.markdown 到你的./source/_posts/ 下面，就我理解這個有點像是原始檔(Markdown Source Code)，然後你可以在 *.markdown中用markdown語法寫文章存檔，然後執行
 	
@@ -79,9 +80,11 @@ then
 
 
 + ###刪文
-有了剛剛些概念後應該可以大概知道，使用
 
+有了剛剛些概念後應該可以大概知道，使用
+	
 	$ rake new_post["post_name"]
+
 他其實是幫你把 *.markdown生成到source/_posts/...，然後再透過 
 	
 	$ rake generate
