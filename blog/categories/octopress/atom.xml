@@ -1,4 +1,24 @@
-<h1>Something about Octopress</h1>
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: octopress | The Coding Life]]></title>
+  <link href="http://hank5000.github.io/blog/categories/octopress/atom.xml" rel="self"/>
+  <link href="http://hank5000.github.io/"/>
+  <updated>2015-06-16T00:38:13+08:00</updated>
+  <id>http://hank5000.github.io/</id>
+  <author>
+    <name><![CDATA[Hank Wu]]></name>
+    <email><![CDATA[hankwuwu@gmail.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[How to use Octopress]]></title>
+    <link href="http://hank5000.github.io/blog/2015/06/16/how-to-use-octopress/"/>
+    <updated>2015-06-16T23:30:00+08:00</updated>
+    <id>http://hank5000.github.io/blog/2015/06/16/how-to-use-octopress</id>
+    <content type="html"><![CDATA[<h1>Something about Octopress</h1>
 
 <hr />
 
@@ -57,30 +77,24 @@ $ git push origin source
 
 <h2>3. 使用Octopress發文/刪文</h2>
 
-<h4>發文</h4>
+<ul>
+<li><h3>發文</h3>
 
-<pre><code>$ rake new_post['文章標題']
-</code></pre>
+<p>  $ rake new_post[&lsquo;文章標題&rsquo;]
+Octopress會生成個 <em>.markdown 到你的./source/_posts/ 下面，就我理解這個有點像是原始檔(Markdown Source Code)，然後你可以在 </em>.markdown中用markdown語法寫文章存檔，然後執行</p>
 
-<p>Octopress會生成個 <em>.markdown 到你的./source/_posts/ 下面，就我理解這個有點像是原始檔(Markdown Source Code)，然後你可以在 </em>.markdown中用markdown語法寫文章存檔，然後執行</p>
+<p>  $ rake generate
+他會去編譯 <em>.markdown變成 </em>.html 放到 _deploy的某個目錄中，然後再執行</p>
 
-<pre><code>$ rake generate
-</code></pre>
+<p>  $ rake deploy
+他會把_deploy新增的或者是刪除的push到github做修改，在po好文章之後你只有把html的部份上傳，可是*.markdown的部分並未上傳做備份，記得再輸入</p>
 
-<p>他會去編譯 <em>.markdown變成 </em>.html 放到 _deploy的某個目錄中，然後再執行</p>
+<p>  $ git add .
+or</p>
 
-<pre><code>$ rake deploy
-</code></pre>
+<p>  $ git add &ldquo;新的file path&rdquo;</p></li>
+</ul>
 
-<p>他會把_deploy新增的或者是刪除的push到github做修改，在po好文章之後你只有把html的部份上傳，可是*.markdown的部分並未上傳做備份，記得再輸入</p>
-
-<pre><code>$ git add .
-</code></pre>
-
-<p>or</p>
-
-<pre><code>$ git add "新的file path"
-</code></pre>
 
 <p>then</p>
 
@@ -88,30 +102,40 @@ $ git push origin source
 $ git push
 </code></pre>
 
-<h4>刪文</h4>
+<ul>
+<li><h3>刪文</h3>
 
 <p>有了剛剛些概念後應該可以大概知道，使用</p>
 
-<pre><code>$ rake new_post["post_name"]
+<p>  $ rake new_post[&ldquo;post_name&rdquo;]
+他其實是幫你把 *.markdown生成到source/_posts/&hellip;，然後再透過</p>
+
+<p>  $ rake generate
+去把html檔生成出來，也就是說如果要刪文的話，你可以到source/_posts/&hellip;，去找你想要刪掉的文章</p>
+
+<p>  $ rm source/_posts/XXXXXX.markdown
+然後在執行</p>
+
+<p>  $ rake generate
+  $ rake deploy
+這樣他就會去把在github上面的相關 html給刪除</p></li>
+</ul>
+
+
+<p>或者是你可以直接在*.markdown上面有一串字描述這篇文章的屬性的</p>
+
+<pre><code>---
+layout: post
+title: "How to use Octopress"
+date: 2015-06-16 23:30
+comments: true
+external-url:
+categories: octopress
+published: true
+---
 </code></pre>
 
-<p>他其實是幫你把 *.markdown生成到source/_posts/&hellip;，然後再透過</p>
-
-<pre><code>$ rake generate
-</code></pre>
-
-<p>去把html檔生成出來，也就是說如果要刪文的話，你可以到source/_posts/&hellip;，去找你想要刪掉的文章</p>
-
-<pre><code>$ rm source/_posts/XXXXXX.markdown
-</code></pre>
-
-<p>然後在執行</p>
-
-<pre><code>$ rake generate
-$ rake deploy
-</code></pre>
-
-<p>這樣他就會去把在github上面的相關 html給刪除.</p>
+<p>加入pulished屬性，然後把它改成false。</p>
 
 <h2>4. 更換Octopress theme</h2>
 
@@ -144,3 +168,7 @@ $ bundler install
 <li><h4><a href="http://cn.soulmachine.me/blog/20140128/">Restore Octopress at a New Computer</a></h4></li>
 </ul>
 
+]]></content>
+  </entry>
+  
+</feed>
