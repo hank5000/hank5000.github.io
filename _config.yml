@@ -4,10 +4,10 @@
 
 url: http://hank5000.github.io
 title: The Coding Life
-subtitle: A blogging framework for hackers.
+subtitle: Simple Life
 author: Hank Wu
 simple_search: https://www.google.com/search
-description:
+description: 
 
 # Default date format is "ordinal" (resulting in "July 22nd 2007")
 # You can customize the format as defined in
@@ -19,7 +19,7 @@ date_format: "ordinal"
 subscribe_rss: /atom.xml
 subscribe_email:
 # RSS feeds can list your email address if you like
-email:
+email: hankwuwu@gmail.com
 
 # ----------------------- #
 #    Jekyll & Plugins     #
@@ -68,13 +68,13 @@ github_user:
 github_repo_count: 0
 github_show_profile_link: true
 github_skip_forks: true
-
+#facebook_user: hank5000@hotmail.com
 # Twitter
 twitter_user:
 twitter_tweet_button: true
 
 # Google +1
-google_plus_one: false
+google_plus_one: true
 google_plus_one_size: medium
 
 # Google Plus Profile
@@ -98,4 +98,4 @@ disqus_show_comment_count: false
 google_analytics_tracking_id:
 
 # Facebook Like
-facebook_like: false
+facebook_like: true
