@@ -153,12 +153,19 @@ then
 這套聽起來就很Git,他是專門拿來寫書用的, 不過應該也可以拿來寫單一頁Markdown文章。
 
 ## 小筆記
-在文字前面後面分別加上\<a name="something"\> and \</a\> 可以在文章上面產生一個Internal link, 在想要link到這段的文章給上連結 \#something 就可以了，不過在這太放太近了可能感覺不出來，Outline的連結也是這樣做的，可以試試看.
+在文字前面加上
+	
+	<a name="something"> 
+後面加上
+
+	</a> 
+可以在文章上面產生一個Internal link, 在想要link到這段的文章給上連結 \#something 就可以了，不過在這太放太近了可能感覺不出來，Outline的連結也是這樣做的，可以試試看.
 
 例如：
 
 
 Go To [Case1](#case1)
+
 
 Go To [Case2](#case2)
 
