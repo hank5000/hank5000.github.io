@@ -4,7 +4,7 @@
   <title><![CDATA[Category: octopress | The Coding Life]]></title>
   <link href="http://hank5000.github.io/blog/categories/octopress/atom.xml" rel="self"/>
   <link href="http://hank5000.github.io/"/>
-  <updated>2015-06-17T07:11:29+08:00</updated>
+  <updated>2015-06-17T07:15:40+08:00</updated>
   <id>http://hank5000.github.io/</id>
   <author>
     <name><![CDATA[Hank Wu]]></name>
@@ -206,7 +206,17 @@ $ bundler install
 
 <h2>小筆記</h2>
 
-<p>在文字前面後面分別加上\<a name="something"\> and \&lt;/a> 可以在文章上面產生一個Internal link, 在想要link到這段的文章給上連結 #something 就可以了，不過在這太放太近了可能感覺不出來，Outline的連結也是這樣做的，可以試試看.</p>
+<p>在文字前面加上</p>
+
+<pre><code>&lt;a name="something"&gt; 
+</code></pre>
+
+<p>後面加上</p>
+
+<pre><code>&lt;/a&gt; 
+</code></pre>
+
+<p>可以在文章上面產生一個Internal link, 在想要link到這段的文章給上連結 #something 就可以了，不過在這太放太近了可能感覺不出來，Outline的連結也是這樣做的，可以試試看.</p>
 
 <p>例如：</p>
 
