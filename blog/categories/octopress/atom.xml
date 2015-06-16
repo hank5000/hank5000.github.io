@@ -4,7 +4,7 @@
   <title><![CDATA[Category: octopress | The Coding Life]]></title>
   <link href="http://hank5000.github.io/blog/categories/octopress/atom.xml" rel="self"/>
   <link href="http://hank5000.github.io/"/>
-  <updated>2015-06-16T01:12:14+08:00</updated>
+  <updated>2015-06-17T07:11:29+08:00</updated>
   <id>http://hank5000.github.io/</id>
   <author>
     <name><![CDATA[Hank Wu]]></name>
@@ -34,11 +34,27 @@
 
 <hr />
 
-<h2>1. 創建github repository (前提是你已經有github帳號，如果沒有就<a href="https://github.com/">註冊</a>一個囉)</h2>
+<h2>Outline :</h2>
+
+<h3>1. <a href="#Create%20github">創建github repository</a></h3>
+
+<h3>2. <a href="#Built%20Octopress">架設Octopress環境</a></h3>
+
+<h3>3. <a href="#post%20delete">使用Octopress 發文/刪文</a></h3>
+
+<h3>4. <a href="#Octopress%20theme">更換Octopress theme</a></h3>
+
+<h3>5. <a href="#Clone%20env">如何在別台電腦上clone你做好的octopress環境</a></h3>
+
+<h3>6. <a href="#About%20Markdown">編寫Markdown好用軟體</a></h3>
+
+<hr />
+
+<h2><a name="Create github">1.</a> 創建github repository (前提是你已經有github帳號，如果沒有就去<a href="https://github.com/">註冊</a>)</h2>
 
 <p>這邊介紹我使用的方法，登入github之後選擇 + New repository，並且在Repository name的地方填上 <em>username.github.io</em>，之後你就會生出一個叫做username.github.io的Repository，這個就是以後作為你的github page使用。</p>
 
-<h2>2. 架設Octopress環境</h2>
+<h2><a name="Built Octopress">2.</a> 架設Octopress環境</h2>
 
 <p>如何架設Ocotpress環境可以參考<a href="http://octopress.org/docs/setup/">官方網站</a>
 大概就是</p>
@@ -75,19 +91,19 @@ $ git push origin source
 
 <p>此時你的github repo會有兩個branch一個是source 一個是master，source是你目前這個octopress資料夾下的所有檔案除了_deploy，而master呢就是你實際的網頁內容(_deploy資料夾裡面的部分)</p>
 
-<h2>3. 使用Octopress發文/刪文</h2>
+<h2><a name="post delete">3.</a> 使用Octopress發文/刪文</h2>
 
 <h3>發文</h3>
 
 <pre><code>$ rake new_post['文章標題']
 </code></pre>
 
-<p>Octopress會生成個 <em>.markdown 到你的./source/_posts/ 下面，就我理解這個有點像是原始檔(Markdown Source Code)，然後你可以在 </em>.markdown中用markdown語法寫文章存檔，然後執行</p>
+<p>Octopress會生成個 *.markdown 到你的./source/_posts/ 下面，就我理解這個有點像是原始檔(Markdown Source Code)，然後你可以在 *.markdown中用markdown語法寫文章存檔，然後執行</p>
 
 <pre><code>$ rake generate
 </code></pre>
 
-<p>他會去編譯 <em>.markdown變成 </em>.html 放到 _deploy的某個目錄中，然後再執行</p>
+<p>他會去編譯 *.markdown變成 *.html 放到 _deploy的某個目錄中，然後再執行</p>
 
 <pre><code>$ rake deploy
 </code></pre>
@@ -151,11 +167,11 @@ published: true
 
 <p>加入pulished屬性，然後把它改成false。</p>
 
-<h2>4. 更換Octopress theme</h2>
+<h2><a name="Octopress theme">4.</a> 更換Octopress theme</h2>
 
 <p>來來來來看<a href="http://tommy351.github.io/Octopress-Theme-Slash/index_tw.html">這篇</a>你大概就知道怎麼更換Octopress theme囉，連結裡面那篇是一個叫做Slash的主題，非常的簡約風格，就是我現在使用的這個，照著他教學做，你也可以跟我的風格一樣囉</p>
 
-<h2>5. 如何在別台電腦上clone你做好的octopress環境</h2>
+<h2><a name="Clone env">5.</a> 如何在別台電腦上clone你做好的octopress環境</h2>
 
 <p>這件事是困擾我最久的，也是我搞最久的，剛好有找到一個很好的教學，前提你架設過octopress然後在github也有紀錄，你是想在另外一條電腦上發文章，你該怎麼複製出一份一樣的環境呢（octopress最基本的ruby跟git是一定要有的）</p>
 
@@ -172,6 +188,53 @@ $ bundler install
 </code></pre>
 
 <p>直接可以使用囉。</p>
+
+<h2><a name="About Markdown">6.</a> 編寫Markdown好用軟體</h2>
+
+<ul>
+<li><h3>Miu</h3>
+
+<p>這套僅僅在OSX才有。</p></li>
+<li><h3>Mou</h3>
+
+<p>這套是別人品持著Miu的概念，在Windows下開發的Markdown editor。</p></li>
+<li><h3>GitBook editor</h3>
+
+<p>這套聽起來就很Git,他是專門拿來寫書用的, 不過應該也可以拿來寫單一頁Markdown文章。</p></li>
+</ul>
+
+
+<h2>小筆記</h2>
+
+<p>在文字前面後面分別加上\<a name="something"\> and \&lt;/a> 可以在文章上面產生一個Internal link, 在想要link到這段的文章給上連結 #something 就可以了，不過在這太放太近了可能感覺不出來，Outline的連結也是這樣做的，可以試試看.</p>
+
+<p>例如：</p>
+
+<p>Go To <a href="#case1">Case1</a></p>
+
+<p>Go To <a href="#case2">Case2</a></p>
+
+<p><a name="case1">Case1</a>:
+this is case1</p>
+
+<p><a name="case2">Case2</a>:
+This is case2</p>
+
+<p>其原始碼為：</p>
+
+<pre><code>Go To [Case1](#case1)
+
+Go To [Case2](#case2)
+
+
+&lt;a name="case1"&gt;Case1&lt;/a&gt;:
+this is case1
+
+&lt;a name="case2"&gt;Case2&lt;/a&gt;:
+This is case2
+</code></pre>
+
+<hr />
 
 <h3>參考來源：</h3>
 
