@@ -1,0 +1,261 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Live555 RTSP Server on Android - The Coding Life</title>
+	<meta name="author" content="Hank Wu">
+
+	
+	<meta name="description" content="最近在看 RTSP Server on Android 相關資源，趁現在有空就把它整理整理。 RTSP Server最有名的大概就是 Live555，這套功能還不錯可以支援 .264, .265, .aac, .amr, &hellip; 比較重要的是它可以支援 .mkv, .ts ( &hellip;">
+	
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	<link href="/atom.xml" rel="alternate" title="The Coding Life" type="application/atom+xml">
+	<link rel="canonical" href="">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script async="true" src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	
+</head>
+
+
+<body>
+	<header id="header" class="inner"><h1><a href="/">The Coding Life</a></h1>
+<nav id="main-nav"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+	<li><a href="/about">About</a></li>
+</ul>
+</nav>
+<nav id="mobile-nav">
+	<div class="alignleft menu">
+		<a class="button">Menu</a>
+		<div class="container"><ul class="main">
+	<li><a href="/">Blog</a></li>
+	<li><a href="/blog/archives">Archives</a></li>
+	<li><a href="/about">About</a></li>
+</ul>
+</div>
+	</div>
+	<div class="alignright search">
+		<a class="button"></a>
+		<div class="container">
+			<form action="https://www.google.com/search" method="get">
+				<input type="text" name="q" results="0">
+				<input type="hidden" name="q" value="site:hank5000.github.io">
+			</form>
+		</div>
+	</div>
+</nav>
+<nav id="sub-nav" class="alignright">
+	<div class="social">
+		
+		
+		
+		
+    
+		
+		
+		
+		
+		
+		<a class="rss" href="/atom.xml" title="RSS">RSS</a>
+		
+    
+	</div>
+	<form class="search" action="https://www.google.com/search" method="get">
+		<input class="alignright" type="text" name="q" results="0">
+		<input type="hidden" name="q" value="site:hank5000.github.io">
+	</form>
+</nav>
+
+</header>
+	
+		
+	
+	<div id="content" class="inner"><article class="post">
+	<h2 class="title">Live555 RTSP Server on Android</h2>
+	<div class="entry-content"><p>最近在看 RTSP Server on Android 相關資源，趁現在有空就把它整理整理。</p>
+
+<ol>
+<li><p>RTSP Server最有名的大概就是 <a href="http://www.live555.com/"><strong>Live555</strong></a>，這套功能還不錯可以支援 .264, .265, .aac, .amr, &hellip; 比較重要的是它可以支援 .mkv, .ts (如果Stream這兩種格式都會把Video 跟Audio一同Stream出去, .mkv還會有Subtitle)，還有很多格式建議到官網去看一下。</p></li>
+<li><p>我找到的另外一個是已經在Android上實現RTSP Server功能的一個Library，叫做<a href="https://github.com/fyhertz/libstreaming"><strong>libstreaming</strong></a>，
+作者叫做fyhertz，他還有另外一個作品叫做<a href="https://play.google.com/store/apps/details?id=net.majorkernelpanic.spydroid&amp;amp;hl=zh_TW">spydroid-ipcam</a>，
+其功能是把Android手機的Camera跟Microphone透過RTP/UDP發送出去，而libstreaming就是他這套Application的核心library。</p></li>
+</ol>
+
+
+<p>(在作者的github網頁中可以找到spydroid-ipcam的source code 跟libstreaming library 還有libstreaming的example1/2/3, 使用者可以使用libstreaming library + libstreaming example1 拼成spydroid-ipcam簡易的樣子)</p>
+
+<hr />
+
+<p>找好資源後就要自己動工了，如果要讓RTSP Server跑在Android上面並且支援Stream local file的話大概就是兩個選項，在下面一併附上我實作的方法。</p>
+
+<ol>
+<li><h2>移植Live555到Android上面</h2>
+
+<ul>
+<li><p>Live555 Download後解開把source code直接把live下的所有文件放到你想要使用的project下的jni目錄中(需要把project的native support打開並且指定好ndk path)</p>
+
+<pre><code>Live555project/jni# tree -d
+.
+├──BasicUsageEnvironment
+│   └── include
+├── groupsock
+│   └── include
+├── liveMedia
+│   └── include
+├── mediaServer
+├── proxyServer
+├── testProgs
+├── UsageEnvironment
+│   └── include
+└── WindowsAudioInputDevice
+</code></pre></li>
+</ul>
+
+
+<p> 檔案太多就不都列出來拉，總之jni下面就是解開live555中live資料夾裡面的東西。</p>
+
+<ul>
+<li><p>然後要補上Android.mk 跟 一個銜接java 跟 native層的一個.cpp file.</p>
+
+<ul>
+<li>Live555的Android.mk在網路上可以找到，<a href="http://blog.csdn.net/sunwutian0325/article/details/8582524">連結在此</a>，但是由於他這個版本是2013年的版本，所以使用者使用時必須再加上一些檔案以及mediaServer的部分到LOCAL_SRC_FILE下，再把LOCAL_MODULE的名稱改成 live555， Android.mk一樣是放在jni下。</li>
+<li>.cpp大概的寫法就是把live555mediaserver.cpp的main function copy把header file寫一寫，然後這隻function name要符合jni的規範讓java層Call的到(ex:Java_com_example_rtspserver_MainActivity_RunRTSPServer&hellip;)
+然後開始build application，如果你設定都沒有錯應該就會把liblive555.so build出來並且放到project/libs/armeabi/ 下，並且放到.apk中</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><h2>改libStreaming使之支援Streaming Local file</h2>
+
+<ul>
+<li><p>我改到可以把local file解開然後把其.264部分傳出來，但是這就比較複雜，就不多寫了，主要就是要把URLEncodedUtil那邊看的東西多加local file資訊，這樣Server才會知道Client想要看哪個video，然後要demux該影片，demux這工作可以不用自己來，可以使用ffmpeg或者是Android自帶的api MediaExtractor(Android4.3開始提供)，這邊提供如何取出Video的方法:</p>
+
+<pre><code>MediaExtractor mExtractor = new MediaExtractor();
+ByteBuffer mTransBuffer = ByteBuffer.allocate(102410242);
+private byte[] mTmpBuf = new byte[102410242];
+String path = “video_path/abc.mp4”;
+mExtractor.setDataSource(path);
+int numTrack = mExtractor.getTrackCount();
+int h264Track = -1;
+for(int i=0;i&lt;numTrack;++i)
+{
+    MediaFormat format = mExtractor.getTrackFormat(i);
+    String mime = format.getString(MediaFormat.KEY_MIME);
+    if(mime.contains(“video”) &amp;&amp; mime.contains(“avc”))
+    {
+        h264Track = i;
+    }
+}
+if(h264Track!=-1)
+{
+    mExtractor.selectTrack(h264Track);
+    while(true)
+    {
+        int Size = mExtractor.readSampleData(mTransBuffer,0); // read frame to mTransBuffer
+        mTransBuffer.get(mTmpBuf);
+        mExtractor.advance(); // go next frame
+    }
+}
+</code></pre></li>
+</ul>
+</li>
+</ol>
+
+
+<p>以上就是使用android原生的api去demux一個video file,</p>
+
+<p>使用前提是該container format為android support的format，</p>
+
+<p>在readSampleData後把拿到的mTransBuffer裝到mTmpBuf再把mTmpBuf改裝到在H264Packetizer.cpp中的function Send()，</p>
+
+<p>其Send()原本是把Encode好的BitStream取出然後包裝送出，現在就把他替換成我們Demux之後的video source就可以了.</p>
+
+<p>不過用libstreaming library好像有一些問題在，例如Streaming high bitrate的264會有很容易破圖,可能是有更多的細節需要做更改。</p>
+</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+Jun 24th, 2015</div>
+	<div class="tags">
+
+
+	<a class='category' href='/blog/categories/android/'>android</a>, <a class='category' href='/blog/categories/rtsp-server/'>rtsp_server</a>
+
+
+</div>
+	
+	<div class="comments"><a href="#disqus_thread">Comments</a></div>
+	
+</div>
+</article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+		
+		<a class="addthis_button_facebook_like" fb:like:layout="button_count"></a>
+		
+		
+		<a class="addthis_button_tweet"></a>
+		
+		
+		<a class="addthis_button_google_plusone" g:plusone:size="medium"></a>
+		
+		
+	</div>
+	
+</div>
+
+
+
+<section id="comment">
+    <h2 class="title">Comments</h2>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+	<footer id="footer" class="inner">Copyright &copy; 2015
+
+    Hank Wu
+
+</footer>
+	<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'HankWuBlog';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://hank5000.github.io/blog/2015/06/24/live555-rtsp-server-on-android/';
+        var disqus_url = 'http://hank5000.github.io/blog/2015/06/24/live555-rtsp-server-on-android/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//go.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+</body>
+</html>
