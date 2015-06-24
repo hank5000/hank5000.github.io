@@ -4,7 +4,7 @@ title: "How to use Octopress"
 date: 2015-06-16 23:30
 comments: true
 external-url:
-categories: octopress
+categories: Octopress Github Blog
 published: true
 
 ---
