@@ -106,74 +106,118 @@
 <li><h2>移植Live555到Android上面</h2>
 
 <ul>
-<li><p>Live555 Download後解開把source code直接把live下的所有文件放到你想要使用的project下的jni目錄中(需要把project的native support打開並且指定好ndk path)</p>
-
-<pre><code>Live555project/jni# tree -d
-.
-├──BasicUsageEnvironment
-│   └── include
-├── groupsock
-│   └── include
-├── liveMedia
-│   └── include
-├── mediaServer
-├── proxyServer
-├── testProgs
-├── UsageEnvironment
-│   └── include
-└── WindowsAudioInputDevice
-</code></pre></li>
+<li>Live555 Download後解開把source code直接把live下的所有文件放到你想要使用的project下的jni目錄中(需要把project的native support打開並且指定好ndk path)</li>
 </ul>
+</li>
+</ol>
 
 
-<p> 檔案太多就不都列出來拉，總之jni下面就是解開live555中live資料夾裡面的東西。</p>
+<figure class='code'><figcaption><span>Console </span></figcaption>
+<div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='console'><span class='line'><span class="go">Live555project/jni# tree -d</span>
+</span><span class='line'><span class="go">.</span>
+</span><span class='line'><span class="go">├──BasicUsageEnvironment</span>
+</span><span class='line'><span class="go">│   └── include</span>
+</span><span class='line'><span class="go">├── groupsock</span>
+</span><span class='line'><span class="go">│   └── include</span>
+</span><span class='line'><span class="go">├── liveMedia</span>
+</span><span class='line'><span class="go">│   └── include</span>
+</span><span class='line'><span class="go">├── mediaServer</span>
+</span><span class='line'><span class="go">├── proxyServer</span>
+</span><span class='line'><span class="go">├── testProgs</span>
+</span><span class='line'><span class="go">├── UsageEnvironment</span>
+</span><span class='line'><span class="go">│   └── include</span>
+</span><span class='line'><span class="go">└── WindowsAudioInputDevice</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>檔案太多就不都列出來拉，總之jni下面就是解開live555中live資料夾裡面的東西。</p>
 
 <ul>
-<li><p>然後要補上Android.mk 跟 一個銜接java 跟 native層的一個.cpp file.</p>
+<li><p> 然後要補上Android.mk 跟 一個銜接java 跟 native層的一個.cpp file.</p>
 
 <ul>
 <li>Live555的Android.mk在網路上可以找到，<a href="http://blog.csdn.net/sunwutian0325/article/details/8582524">連結在此</a>，但是由於他這個版本是2013年的版本，所以使用者使用時必須再加上一些檔案以及mediaServer的部分到LOCAL_SRC_FILE下，再把LOCAL_MODULE的名稱改成 live555， Android.mk一樣是放在jni下。</li>
 <li>.cpp大概的寫法就是把live555mediaserver.cpp的main function copy把header file寫一寫，然後這隻function name要符合jni的規範讓java層Call的到(ex:Java_com_example_rtspserver_MainActivity_RunRTSPServer&hellip;)
-然後開始build application，如果你設定都沒有錯應該就會把liblive555.so build出來並且放到project/libs/armeabi/ 下，並且放到.apk中</li>
-</ul>
-</li>
+ 然後開始build application，如果你設定都沒有錯應該就會把liblive555.so build出來並且放到project/libs/armeabi/ 下，並且放到.apk中</li>
 </ul>
 </li>
 <li><h2>改libStreaming使之支援Streaming Local file</h2>
 
 <ul>
-<li><p>我改到可以把local file解開然後把其.264部分傳出來，但是這就比較複雜，就不多寫了，主要就是要把URLEncodedUtil那邊看的東西多加local file資訊，這樣Server才會知道Client想要看哪個video，然後要demux該影片，demux這工作可以不用自己來，可以使用ffmpeg或者是Android自帶的api MediaExtractor(Android4.3開始提供)，這邊提供如何取出Video的方法:</p>
-
-<pre><code>MediaExtractor mExtractor = new MediaExtractor();
-ByteBuffer mTransBuffer = ByteBuffer.allocate(102410242);
-private byte[] mTmpBuf = new byte[102410242];
-String path = “video_path/abc.mp4”;
-mExtractor.setDataSource(path);
-int numTrack = mExtractor.getTrackCount();
-int h264Track = -1;
-for(int i=0;i&lt;numTrack;++i)
-{
-    MediaFormat format = mExtractor.getTrackFormat(i);
-    String mime = format.getString(MediaFormat.KEY_MIME);
-    if(mime.contains(“video”) &amp;&amp; mime.contains(“avc”))
-    {
-        h264Track = i;
-    }
-}
-if(h264Track!=-1)
-{
-    mExtractor.selectTrack(h264Track);
-    while(true)
-    {
-        int Size = mExtractor.readSampleData(mTransBuffer,0); // read frame to mTransBuffer
-        mTransBuffer.get(mTmpBuf);
-        mExtractor.advance(); // go next frame
-    }
-}
-</code></pre></li>
+<li>我改到可以把local file解開然後把其.264部分傳出來，但是這就比較複雜，就不多寫了，主要就是要把URLEncodedUtil那邊看的東西多加local file資訊，這樣Server才會知道Client想要看哪個video，然後要demux該影片，demux這工作可以不用自己來，可以使用ffmpeg或者是Android自帶的api MediaExtractor(Android4.3開始提供)，這邊提供如何取出Video的方法:</li>
 </ul>
 </li>
-</ol>
+</ul>
+
+
+<figure class='code'><figcaption><span>How to use android MediaExtractor api </span></figcaption>
+<div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">MediaExtractor</span> <span class="n">mExtractor</span> <span class="o">=</span> <span class="k">new</span> <span class="nf">MediaExtractor</span><span class="o">();</span>
+</span><span class='line'><span class="n">ByteBuffer</span> <span class="n">mTransBuffer</span> <span class="o">=</span> <span class="n">ByteBuffer</span><span class="o">.</span><span class="na">allocate</span><span class="o">(</span><span class="mi">1024</span><span class="o">*</span><span class="mi">1024</span><span class="o">*</span><span class="mi">2</span><span class="o">);</span>
+</span><span class='line'><span class="kd">private</span> <span class="kt">byte</span><span class="o">[]</span> <span class="n">mTmpBuf</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">byte</span><span class="o">[</span><span class="mi">1024</span><span class="o">*</span><span class="mi">1024</span><span class="o">*</span><span class="mi">2</span><span class="o">];</span>
+</span><span class='line'><span class="n">String</span> <span class="n">path</span> <span class="o">=</span> <span class="err">“</span><span class="n">video_path</span><span class="o">/</span><span class="n">abc</span><span class="o">.</span><span class="na">mp4</span><span class="err">”</span><span class="o">;</span>
+</span><span class='line'><span class="n">mExtractor</span><span class="o">.</span><span class="na">setDataSource</span><span class="o">(</span><span class="n">path</span><span class="o">);</span>
+</span><span class='line'><span class="kt">int</span> <span class="n">numTrack</span> <span class="o">=</span> <span class="n">mExtractor</span><span class="o">.</span><span class="na">getTrackCount</span><span class="o">();</span>
+</span><span class='line'><span class="kt">int</span> <span class="n">h264Track</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="o">;</span>
+</span><span class='line'><span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span><span class="n">i</span><span class="o">&lt;</span><span class="n">numTrack</span><span class="o">;++</span><span class="n">i</span><span class="o">)</span>
+</span><span class='line'><span class="o">{</span>
+</span><span class='line'>    <span class="n">MediaFormat</span> <span class="n">format</span> <span class="o">=</span> <span class="n">mExtractor</span><span class="o">.</span><span class="na">getTrackFormat</span><span class="o">(</span><span class="n">i</span><span class="o">);</span>
+</span><span class='line'>    <span class="n">String</span> <span class="n">mime</span> <span class="o">=</span> <span class="n">format</span><span class="o">.</span><span class="na">getString</span><span class="o">(</span><span class="n">MediaFormat</span><span class="o">.</span><span class="na">KEY_MIME</span><span class="o">);</span>
+</span><span class='line'>    <span class="k">if</span><span class="o">(</span><span class="n">mime</span><span class="o">.</span><span class="na">contains</span><span class="o">(</span><span class="err">“</span><span class="n">video</span><span class="err">”</span><span class="o">)</span> <span class="o">&amp;&amp;</span> <span class="n">mime</span><span class="o">.</span><span class="na">contains</span><span class="o">(</span><span class="err">“</span><span class="n">avc</span><span class="err">”</span><span class="o">))</span>
+</span><span class='line'>    <span class="o">{</span>
+</span><span class='line'>        <span class="n">h264Track</span> <span class="o">=</span> <span class="n">i</span><span class="o">;</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'><span class="k">if</span><span class="o">(</span><span class="n">h264Track</span><span class="o">!=-</span><span class="mi">1</span><span class="o">)</span>
+</span><span class='line'><span class="o">{</span>
+</span><span class='line'>    <span class="n">mExtractor</span><span class="o">.</span><span class="na">selectTrack</span><span class="o">(</span><span class="n">h264Track</span><span class="o">);</span>
+</span><span class='line'>    <span class="k">while</span><span class="o">(</span><span class="kc">true</span><span class="o">)</span>
+</span><span class='line'>    <span class="o">{</span>
+</span><span class='line'>        <span class="kt">int</span> <span class="n">Size</span> <span class="o">=</span> <span class="n">mExtractor</span><span class="o">.</span><span class="na">readSampleData</span><span class="o">(</span><span class="n">mTransBuffer</span><span class="o">,</span><span class="mi">0</span><span class="o">);</span> <span class="c1">// read frame to mTransBuffer</span>
+</span><span class='line'>        <span class="n">mTransBuffer</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">mTmpBuf</span><span class="o">);</span>
+</span><span class='line'>        <span class="n">mExtractor</span><span class="o">.</span><span class="na">advance</span><span class="o">();</span> <span class="c1">// go next frame</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
 
 
 <p>以上就是使用android原生的api去demux一個video file,</p>
