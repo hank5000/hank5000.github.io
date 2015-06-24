@@ -1,0 +1,12 @@
+// This File is imported last, and will override other styles in the cascade
+// Add styles here to make changes without digging in too much
+.CodeRay pre {
+  background: none;
+  color: #000;
+}
+
+.CodeRay span.insert, .CodeRay span.change, .CodeRay span.delete {
+	width: auto;
+}
+
+@import "coderay-github"

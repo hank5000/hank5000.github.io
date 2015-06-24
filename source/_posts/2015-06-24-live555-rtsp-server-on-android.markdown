@@ -25,59 +25,62 @@ categories: Android RTSP_Server
 1. ##移植Live555到Android上面
 
     * Live555 Download後解開把source code直接把live下的所有文件放到你想要使用的project下的jni目錄中(需要把project的native support打開並且指定好ndk path)
+{% codeblock lang:console Console %}
+Live555project/jni# tree -d
+.
+├──BasicUsageEnvironment
+│   └── include
+├── groupsock
+│   └── include
+├── liveMedia
+│   └── include
+├── mediaServer
+├── proxyServer
+├── testProgs
+├── UsageEnvironment
+│   └── include
+└── WindowsAudioInputDevice
+{% endcodeblock %}
 
-          Live555project/jni# tree -d
-          .
-          ├──BasicUsageEnvironment
-          │   └── include
-          ├── groupsock
-          │   └── include
-          ├── liveMedia
-          │   └── include
-          ├── mediaServer
-          ├── proxyServer
-          ├── testProgs
-          ├── UsageEnvironment
-          │   └── include
-          └── WindowsAudioInputDevice
+檔案太多就不都列出來拉，總之jni下面就是解開live555中live資料夾裡面的東西。
 
-    檔案太多就不都列出來拉，總之jni下面就是解開live555中live資料夾裡面的東西。
-    *  然後要補上Android.mk 跟 一個銜接java 跟 native層的一個.cpp file.
+  *  然後要補上Android.mk 跟 一個銜接java 跟 native層的一個.cpp file.
 
-        * Live555的Android.mk在網路上可以找到，[連結在此](http://blog.csdn.net/sunwutian0325/article/details/8582524)，但是由於他這個版本是2013年的版本，所以使用者使用時必須再加上一些檔案以及mediaServer的部分到LOCAL_SRC_FILE下，再把LOCAL_MODULE的名稱改成 live555， Android.mk一樣是放在jni下。
-        * .cpp大概的寫法就是把live555mediaserver.cpp的main function copy把header file寫一寫，然後這隻function name要符合jni的規範讓java層Call的到(ex:Java_com_example_rtspserver_MainActivity_RunRTSPServer...)
+    * Live555的Android.mk在網路上可以找到，[連結在此](http://blog.csdn.net/sunwutian0325/article/details/8582524)，但是由於他這個版本是2013年的版本，所以使用者使用時必須再加上一些檔案以及mediaServer的部分到LOCAL_SRC_FILE下，再把LOCAL_MODULE的名稱改成 live555， Android.mk一樣是放在jni下。
+    * .cpp大概的寫法就是把live555mediaserver.cpp的main function copy把header file寫一寫，然後這隻function name要符合jni的規範讓java層Call的到(ex:Java_com_example_rtspserver_MainActivity_RunRTSPServer...)
        然後開始build application，如果你設定都沒有錯應該就會把liblive555.so build出來並且放到project/libs/armeabi/ 下，並且放到.apk中
 
 2.  ##改libStreaming使之支援Streaming Local file
 
     * 我改到可以把local file解開然後把其.264部分傳出來，但是這就比較複雜，就不多寫了，主要就是要把URLEncodedUtil那邊看的東西多加local file資訊，這樣Server才會知道Client想要看哪個video，然後要demux該影片，demux這工作可以不用自己來，可以使用ffmpeg或者是Android自帶的api MediaExtractor(Android4.3開始提供)，這邊提供如何取出Video的方法:
-
-          MediaExtractor mExtractor = new MediaExtractor();
-          ByteBuffer mTransBuffer = ByteBuffer.allocate(102410242);
-          private byte[] mTmpBuf = new byte[102410242];
-          String path = “video_path/abc.mp4”;
-          mExtractor.setDataSource(path);
-          int numTrack = mExtractor.getTrackCount();
-          int h264Track = -1;
-          for(int i=0;i<numTrack;++i)
-          {
-              MediaFormat format = mExtractor.getTrackFormat(i);
-              String mime = format.getString(MediaFormat.KEY_MIME);
-              if(mime.contains(“video”) && mime.contains(“avc”))
-              {
-                  h264Track = i;
-              }
-          }
-          if(h264Track!=-1)
-          {
-              mExtractor.selectTrack(h264Track);
-              while(true)
-              {
-                  int Size = mExtractor.readSampleData(mTransBuffer,0); // read frame to mTransBuffer
-                  mTransBuffer.get(mTmpBuf);
-                  mExtractor.advance(); // go next frame
-              }
-          }
+{% codeblock lang:java How to use android MediaExtractor api %}
+MediaExtractor mExtractor = new MediaExtractor();
+ByteBuffer mTransBuffer = ByteBuffer.allocate(1024*1024*2);
+private byte[] mTmpBuf = new byte[1024*1024*2];
+String path = “video_path/abc.mp4”;
+mExtractor.setDataSource(path);
+int numTrack = mExtractor.getTrackCount();
+int h264Track = -1;
+for(int i=0;i<numTrack;++i)
+{
+    MediaFormat format = mExtractor.getTrackFormat(i);
+    String mime = format.getString(MediaFormat.KEY_MIME);
+    if(mime.contains(“video”) && mime.contains(“avc”))
+    {
+        h264Track = i;
+    }
+}
+if(h264Track!=-1)
+{
+    mExtractor.selectTrack(h264Track);
+    while(true)
+    {
+        int Size = mExtractor.readSampleData(mTransBuffer,0); // read frame to mTransBuffer
+        mTransBuffer.get(mTmpBuf);
+        mExtractor.advance(); // go next frame
+    }
+}
+{% endcodeblock %}
 
 以上就是使用android原生的api去demux一個video file,
 

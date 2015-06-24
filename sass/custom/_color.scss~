@@ -1,0 +1,10 @@
+// $color-background: #eee;
+// $color-main: #258fb8;
+// $color-gray01: #666;
+// $color-gray02: #999;
+// $color-gray03: #ccc;
+// $color-gray04: #ddd;
+// $color-gray05: #fff;
+$code-bg: #141414;
+$code-color: #F8F8F8;
+$line-nb-bg: #404040;
