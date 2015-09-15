@@ -44,7 +44,7 @@ AppRTC也有**Mobile device**的**Application**的版本，在**Android**跟**IO
 _____
 
 ###NOTE:###
-由於我參考了Etiv的文章後還是有些不懂，所以目前我所有Server都是使用Google的，然後去實現我的Android Application(讓兩隻android device透過WebRTC中的**Data Channel**來傳輸資料，點對點前的溝通都是透過google架設的Server，目前使用Google的Server都堪用)，如果有人整個架設成功還請教一下小弟。
+由於我參考了Etiv的文章後還是有些不懂，所以目前我所有Server都是使用Google的，然後去實現我的Android Application(讓兩隻android device透過WebRTC中的**Data Channel**來傳輸資料，點對點前的溝通都是透過google架設的Server，目前使用Google的Server都堪用)，如果有人整個架設成功還請教一下小弟,至於這個Data Channel怎麼使用因為原生的Source Code中都沒用到，所以沒東西可以參考，在網路上有看到有用的資訊連結在此 [Working with data channel in android webrtc application](http://stackoverflow.com/questions/29465192/working-with-datachannel-in-android-webrtc-application)，很多問題通常在Stackflow總是可以找到解答:D
 
 
 
