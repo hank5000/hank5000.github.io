@@ -4,7 +4,7 @@
   <title><![CDATA[Category: android | The Coding Life]]></title>
   <link href="http://hank5000.github.io/blog/categories/android/atom.xml" rel="self"/>
   <link href="http://hank5000.github.io/"/>
-  <updated>2015-06-28T09:20:17+08:00</updated>
+  <updated>2015-09-16T00:01:28+08:00</updated>
   <id>http://hank5000.github.io/</id>
   <author>
     <name><![CDATA[Hank Wu]]></name>
@@ -12,6 +12,64 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Learn AppRTC/WebRTC]]></title>
+    <link href="http://hank5000.github.io/blog/2015/09/15/learn-apprtc-slash-webrtc/"/>
+    <updated>2015-09-15T23:59:02+08:00</updated>
+    <id>http://hank5000.github.io/blog/2015/09/15/learn-apprtc-slash-webrtc</id>
+    <content type="html"><![CDATA[<h1><strong>Learn WebRTC/AppRTC</strong></h1>
+
+<hr />
+
+<p>最近在使用WebRTC做些Android上的應用，一開始被Google的這些東西快要搞死，為了方便還是把資料整理一下，丟個教學出來，以便複習跟學習，如果寫的有誤請不吝告知。</p>
+
+<h5>都不知道是甚麼的可以先去玩一下 <a href="https://apprtc.appspot.com">AppRTC Demo</a></h5>
+
+<ul>
+<li><p><a href="http://www.webrtc.org/">WebRTC</a>是Web Real-Time Communication的縮寫，其本意就是可以在Web上實行即時溝通的一個免費且開放的project，其project提供了簡易的api讓開發者便於開發應用.</p></li>
+<li><p>WebRTC的目標為在browser/mobile device/IoT device上開創一個豐富且高品質且統一的溝通協定架構。</p></li>
+</ul>
+
+
+<h5>一個私有的WebRTC基本上要有</h5>
+
+<ul>
+<li><p><strong>Room Server :</strong> 主要用來創建跟管理通訊狀況。
+(Google原生是使用Nodejs實現，用python驅動)</p></li>
+<li><p><strong>Signaling Server :</strong> 主要是管理以及協助終端做點對點的一個角色，負責了控制通訊發起/結束/錯誤的連線消息控制，建立安全連接的關鍵數據，管理雙方在外界所能看到的網路上數據(public ip, port,&hellip;)
+(Google原生使用go language寫的<strong><a href="https://github.com/webrtc/apprtc/tree/master/src/collider">collider</a></strong>)</p></li>
+<li><p><strong>Turn Server :</strong> 主要用來協助防火牆穿透的部分，給予Ice candidate等&hellip;資訊。
+(Google推薦使用<strong><a href="https://code.google.com/p/coturn/">coTurn</a></strong>/<strong><a href="https://code.google.com/p/rfc5766-turn-server/">rfc5766-turn-server</a></strong>)</p></li>
+</ul>
+
+
+<p>基本上的架設方法在<a href="https://github.com/webrtc/apprtc">AppRTC Demo Code</a>可以找到如何架設，如果架設起來應該會長得像他們做出來的<a href="https://apprtc.appspot.com">AppRTC Demo</a>，不過我在實作的過程中遇到了一些問題就是我的Turn Server架設不起來。</p>
+
+<h5>附上找到的一些架設資訊:</h5>
+
+<ul>
+<li><strong><a href="http://io.diveinedu.com/2015/02/05/%E7%AC%AC%E5%85%AD%E7%AB%A0-WebRTC%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%90%AD%E5%BB%BA.html">第六章 WebRTC服務器搭建</a> by Diveinedu</strong></li>
+<li><strong><a href="http://www.cnblogs.com/cther/p/4604599.html">基於webrtc的apprtc服務器的搭建</a> by 小曉陳</strong></li>
+<li><strong><a href="http://www.jianshu.com/p/c55ecf5a3fcf">自建AppRTC</a> by ETiv ，比較推薦看這個，寫得挺詳細的。</strong></li>
+</ul>
+
+
+<p>AppRTC也有<strong>Mobile device</strong>的<strong>Application</strong>的版本，在<strong>Android</strong>跟<strong>IOS</strong>上都有，官方連結 <strong><a href="http://www.webrtc.org/native-code">WebRTC-NativeCode</a></strong>可以進去看看，但是要使用Google官網把整份Source Code弄下來會非常痛苦，而且非常耗時，好在有好心的開發者把已經把相關的library compile (native code&hellip;)，應該可以讓其他的開發者只要注重其他java的部分，不過當然可以動的地方就比較少，以下是連結:</p>
+
+<ul>
+<li><p><strong><a href="https://github.com/ISBX/apprtc-ios">IOS版的AppRTC</a> by ISBX</strong></p></li>
+<li><p><strong><a href="https://github.com/njovy/AppRTCDemo">Android版的AppRTC</a> by njovy，好心的njovy還一直有在更新，此專案是在<a href="https://developer.android.com/sdk/index.html">Android Studio</a>上開發，下載下來之後直接run就行了</strong></p></li>
+</ul>
+
+
+<hr />
+
+<h3>NOTE:</h3>
+
+<p>由於我參考了Etiv的文章後還是有些不懂，所以目前我所有Server都是使用Google的，然後去實現我的Android Application(讓兩隻android device透過WebRTC中的<strong>Data Channel</strong>來傳輸資料，點對點前的溝通都是透過google架設的Server，目前使用Google的Server都堪用)，如果有人整個架設成功還請教一下小弟。</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Live555 RTSP Server on Android]]></title>
