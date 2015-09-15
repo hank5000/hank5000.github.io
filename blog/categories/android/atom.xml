@@ -4,7 +4,7 @@
   <title><![CDATA[Category: android | The Coding Life]]></title>
   <link href="http://hank5000.github.io/blog/categories/android/atom.xml" rel="self"/>
   <link href="http://hank5000.github.io/"/>
-  <updated>2015-09-16T00:02:41+08:00</updated>
+  <updated>2015-09-16T00:13:19+08:00</updated>
   <id>http://hank5000.github.io/</id>
   <author>
     <name><![CDATA[Hank Wu]]></name>
@@ -63,7 +63,7 @@
 
 <h3>NOTE:</h3>
 
-<p>由於我參考了Etiv的文章後還是有些不懂，所以目前我所有Server都是使用Google的，然後去實現我的Android Application(讓兩隻android device透過WebRTC中的<strong>Data Channel</strong>來傳輸資料，點對點前的溝通都是透過google架設的Server，目前使用Google的Server都堪用)，如果有人整個架設成功還請教一下小弟。</p>
+<p>由於我參考了Etiv的文章後還是有些不懂，所以目前我所有Server都是使用Google的，然後去實現我的Android Application(讓兩隻android device透過WebRTC中的<strong>Data Channel</strong>來傳輸資料，點對點前的溝通都是透過google架設的Server，目前使用Google的Server都堪用)，如果有人整個架設成功還請教一下小弟,至於這個Data Channel怎麼使用因為原生的Source Code中都沒用到，所以沒東西可以參考，在網路上有看到有用的資訊連結在此 <a href="http://stackoverflow.com/questions/29465192/working-with-datachannel-in-android-webrtc-application">Working with data channel in android webrtc application</a>，很多問題通常在Stackflow總是可以找到解答:D</p>
 ]]></content>
   </entry>
   
