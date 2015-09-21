@@ -7,7 +7,7 @@
 	<meta name="author" content="Hank Wu">
 
 	
-	<meta name="description" content="最近在使用WebRTC做些Android上的應用，一開始被Google的這些東西快要搞死，為了方便還是把資料整理一下，丟個教學出來，以便複習跟學習，如果寫的有誤請不吝告知。 都不知道是甚麼的可以先去玩一下 AppRTC Demo WebRTC是Web Real-Time &hellip;">
+	<meta name="description" content="這其實就是Follow官網的Android Quickstart下去實作，畢竟前一陣子我耐不下心看官網教學我就一直做不出來&hellip;，寫成中文的應該相對簡單。 Step1. 獲得 SHA1 FingerPrint 使用keytool (keytool一般就在java_path/bin下面 &hellip;">
 	
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
@@ -76,6 +76,981 @@
 		
 	
 	<div id="content" class="inner">
+
+
+    <article class="post">
+	<h2 class="title">
+		
+		<a href="/blog/2015/09/22/googledrive/">
+		
+			Following Google Drive Quick Start (Android)</a>
+	</h2>
+	<div class="entry-content">
+		<hr />
+
+<p>這其實就是Follow官網的<a href="https://developers.google.com/drive/web/quickstart/android">Android Quickstart</a>下去實作，畢竟前一陣子我耐不下心看官網教學我就一直做不出來&hellip;，寫成<strong><font color='red'>中文</font></strong>的應該相對簡單。</p>
+
+<ul>
+<li><h3>Step1. 獲得 SHA1 FingerPrint</h3>
+
+<p>使用keytool (keytool一般就在java_path/bin下面)，找到他然後開cmd(terminal)，在有keytool的目錄下輸入command</p>
+
+<ul>
+<li><p><strong>windows</strong> 要下：(ex: 我的電腦名稱是dell11，理論上你可以放在你想要的位置，我是乖乖照著官網想要的路徑擺放)</p>
+
+<pre><code>  $keytool -exportcert -alias androiddebugkey -keystore "C:\Users\dell11\.android\debug.keystore" -list -v
+</code></pre></li>
+<li><p><strong>Mac/Linux</strong> 要下：</p>
+
+<pre><code>  $keytool -exportcert -alias androiddebugkey -keystore "~/.android/debug.keystore" -list -v
+</code></pre></li>
+</ul>
+
+
+<p>差別大概就是在斜線方向不同，還有作業系統file system的一些差異，輸入了之後他會叫你輸入password，此時輸入 <strong>android</strong> 便可，然後應該可以看到一串東西如下:</p>
+
+<pre><code>輸入金鑰儲存庫密碼:
+別名名稱: androiddebugkey
+建立日期: 2015/4/14
+項目類型: PrivateKeyEntry
+憑證鏈長度: 1
+憑證 [1]:
+擁有者: CN=Android Debug, O=Android, C=US
+發出者: CN=Android Debug, O=Android, C=US
+序號: 552bf95a
+有效期自: Tue Apr 14 01:14:02 CST 2015 到: Thu Apr 06 01:14:02 CST 2045
+憑證指紋:
+     MD5:  D8:C1:94:74:C7:0F:91:D8:EC:06:54:33:43:D3:EC:9F
+     SHA1: 27:82:C6:F3:FB:9A:82:2D:A5:93:36:3B:31:A9:F5:98:4A:0D:33:2C
+     SHA256: 95:A0:D3:69:DA:E6:37:BB:B0:66:9E:F2:D3:16:0D:8F:F4:E6:92:0D:B0:90:1D:A7:51:0C:87:7A:98:70:40:05
+     簽章演算法名稱: SHA1withRSA
+     版本: 3    
+</code></pre>
+
+<p>把SHA1那行給記起來(<font color='red'>D8:AA:43:97:59:EE:C5:95:26:6A:07:EE:1C:37:8E:F4:F0:C8:05:C8</font>)。</p></li>
+<li><h3>Step2. 開啟Google API</h3>
+
+然後<strong><a href="https://console.developers.google.com/flows/enableapi?apiid=drive">到這裡</a></strong>，選擇建立 <font color='green'>新專案 </font>=> <font color='green'>繼續</font> => <font color='green'>前往憑證</font> => <font color='green'>新增憑證</font> => <font color='green'>選擇OAuth2.0用戶端編號</font> => 你會發現不能選擇應用程式類型，因為Google說 <strong>您必須先在同意畫面中設定產品名稱，才能建立 OAuth 用戶端編號</strong>，所以先去<font color='green'>設定產品名稱</font>之後，就可以回來選擇應用程式類型， 這邊<font color='green'>選擇Android</font>:
+
+<ul>
+<li><strong>用戶端名稱</strong> : 打什麼應該都可以。</li>
+<li><strong>簽署憑證的指紋</strong> : 就填上剛剛keytool拿到的SHA1後面那一長串。</li>
+<li><strong>套件名稱</strong> : 這個很重要，應用程式建構後要跟這個值對到才可以使用google drive api，例如你的應用程式是叫做 com.example.drivequickstart，這邊也要輸入com.example.drivequickstart. (為了實作方便，直接用這個吧，Android 提供的Source Code也是用這個)
+然後<font color='green'>選擇建立</font>。</li>
+</ul>
+</li>
+<li><h3>Step3. 建立一個新的Android 應用程式專案</h3>
+
+<p>打開Android Studio，<strong>開一個新專案(Company Domain : com.example.drivequickstart)</strong> ，然後把build.gradle(app)內容換成：</p>
+
+<pre><code>apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 22
+    buildToolsVersion "22.0.1"
+
+    defaultConfig {
+        applicationId "com.example.drivequickstart"
+        minSdkVersion 11
+        targetSdkVersion 22
+        versionCode 1
+        versionName "1.0"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'),
+                'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile 'com.android.support:appcompat-v7:22.1.1'
+    compile 'com.google.android.gms:play-services:7.3.0'
+    compile 'com.google.api-client:google-api-client:1.20.0'
+    compile 'com.google.api-client:google-api-client-android:1.20.0'
+    compile 'com.google.api-client:google-api-client-gson:1.20.0'
+    compile 'com.google.apis:google-api-services-drive:v2-rev170-1.20.0'
+    } 
+</code></pre>
+
+<p>然後在上方列點選 <font color='green'>Android</font>=> <font color='green'>Sync Project with Gradle Files</font>. 讓他把依賴的sdk加入project中，然後分別覆蓋下列幾個檔案，如果不存在就開新檔 :</p></li>
+<li>AndroidManifest.xml</li>
+</ul>
+
+
+<figure class='code'><figcaption><span>AndroidManifest.xml </span></figcaption>
+<div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="cp">&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;</span>
+</span><span class='line'><span class="nt">&lt;manifest</span> <span class="na">xmlns:android=</span><span class="s">&quot;http://schemas.android.com/apk/res/android&quot;</span> <span class="na">package=</span><span class="s">&quot;com.example.drivequickstart&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="nt">&lt;uses-permission</span> <span class="na">android:name=</span><span class="s">&quot;android.permission.INTERNET&quot;</span> <span class="nt">/&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;uses-permission</span> <span class="na">android:name=</span><span class="s">&quot;android.permission.ACCESS_NETWORK_STATE&quot;</span> <span class="nt">/&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;uses-permission</span> <span class="na">android:name=</span><span class="s">&quot;android.permission.GET_ACCOUNTS&quot;</span> <span class="nt">/&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;uses-permission</span> <span class="na">android:name=</span><span class="s">&quot;android.permission.MANAGE_ACCOUNTS&quot;</span> <span class="nt">/&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;uses-permission</span> <span class="na">android:name=</span><span class="s">&quot;android.permission.USE_CREDENTIALS&quot;</span> <span class="nt">/&gt;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="nt">&lt;application</span>
+</span><span class='line'>        <span class="na">android:allowBackup=</span><span class="s">&quot;true&quot;</span>
+</span><span class='line'>        <span class="na">android:icon=</span><span class="s">&quot;@mipmap/ic_launcher&quot;</span>
+</span><span class='line'>        <span class="na">android:label=</span><span class="s">&quot;Drive API Android Quickstart&quot;</span>
+</span><span class='line'>        <span class="na">android:theme=</span><span class="s">&quot;@style/AppTheme&quot;</span> <span class="nt">&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;activity</span>
+</span><span class='line'>            <span class="na">android:name=</span><span class="s">&quot;.MainActivity&quot;</span>
+</span><span class='line'>            <span class="na">android:label=</span><span class="s">&quot;Drive API Android Quickstart&quot;</span> <span class="nt">&gt;</span>
+</span><span class='line'>            <span class="nt">&lt;intent-filter&gt;</span>
+</span><span class='line'>                <span class="nt">&lt;action</span> <span class="na">android:name=</span><span class="s">&quot;android.intent.action.MAIN&quot;</span> <span class="nt">/&gt;</span>
+</span><span class='line'>                <span class="nt">&lt;category</span> <span class="na">android:name=</span><span class="s">&quot;android.intent.category.LAUNCHER&quot;</span> <span class="nt">/&gt;</span>
+</span><span class='line'>            <span class="nt">&lt;/intent-filter&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;/activity&gt;</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="nt">&lt;meta-data</span>
+</span><span class='line'>            <span class="na">android:name=</span><span class="s">&quot;com.google.android.gms.version&quot;</span>
+</span><span class='line'>            <span class="na">android:value=</span><span class="s">&quot;@integer/google_play_services_version&quot;</span> <span class="nt">/&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;/application&gt;</span>
+</span><span class='line'><span class="nt">&lt;/manifest&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>MainActivity.java</li>
+</ul>
+
+
+<figure class='code'><figcaption><span>MainActivity.java </span></figcaption>
+<div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+<span class='line-number'>59</span>
+<span class='line-number'>60</span>
+<span class='line-number'>61</span>
+<span class='line-number'>62</span>
+<span class='line-number'>63</span>
+<span class='line-number'>64</span>
+<span class='line-number'>65</span>
+<span class='line-number'>66</span>
+<span class='line-number'>67</span>
+<span class='line-number'>68</span>
+<span class='line-number'>69</span>
+<span class='line-number'>70</span>
+<span class='line-number'>71</span>
+<span class='line-number'>72</span>
+<span class='line-number'>73</span>
+<span class='line-number'>74</span>
+<span class='line-number'>75</span>
+<span class='line-number'>76</span>
+<span class='line-number'>77</span>
+<span class='line-number'>78</span>
+<span class='line-number'>79</span>
+<span class='line-number'>80</span>
+<span class='line-number'>81</span>
+<span class='line-number'>82</span>
+<span class='line-number'>83</span>
+<span class='line-number'>84</span>
+<span class='line-number'>85</span>
+<span class='line-number'>86</span>
+<span class='line-number'>87</span>
+<span class='line-number'>88</span>
+<span class='line-number'>89</span>
+<span class='line-number'>90</span>
+<span class='line-number'>91</span>
+<span class='line-number'>92</span>
+<span class='line-number'>93</span>
+<span class='line-number'>94</span>
+<span class='line-number'>95</span>
+<span class='line-number'>96</span>
+<span class='line-number'>97</span>
+<span class='line-number'>98</span>
+<span class='line-number'>99</span>
+<span class='line-number'>100</span>
+<span class='line-number'>101</span>
+<span class='line-number'>102</span>
+<span class='line-number'>103</span>
+<span class='line-number'>104</span>
+<span class='line-number'>105</span>
+<span class='line-number'>106</span>
+<span class='line-number'>107</span>
+<span class='line-number'>108</span>
+<span class='line-number'>109</span>
+<span class='line-number'>110</span>
+<span class='line-number'>111</span>
+<span class='line-number'>112</span>
+<span class='line-number'>113</span>
+<span class='line-number'>114</span>
+<span class='line-number'>115</span>
+<span class='line-number'>116</span>
+<span class='line-number'>117</span>
+<span class='line-number'>118</span>
+<span class='line-number'>119</span>
+<span class='line-number'>120</span>
+<span class='line-number'>121</span>
+<span class='line-number'>122</span>
+<span class='line-number'>123</span>
+<span class='line-number'>124</span>
+<span class='line-number'>125</span>
+<span class='line-number'>126</span>
+<span class='line-number'>127</span>
+<span class='line-number'>128</span>
+<span class='line-number'>129</span>
+<span class='line-number'>130</span>
+<span class='line-number'>131</span>
+<span class='line-number'>132</span>
+<span class='line-number'>133</span>
+<span class='line-number'>134</span>
+<span class='line-number'>135</span>
+<span class='line-number'>136</span>
+<span class='line-number'>137</span>
+<span class='line-number'>138</span>
+<span class='line-number'>139</span>
+<span class='line-number'>140</span>
+<span class='line-number'>141</span>
+<span class='line-number'>142</span>
+<span class='line-number'>143</span>
+<span class='line-number'>144</span>
+<span class='line-number'>145</span>
+<span class='line-number'>146</span>
+<span class='line-number'>147</span>
+<span class='line-number'>148</span>
+<span class='line-number'>149</span>
+<span class='line-number'>150</span>
+<span class='line-number'>151</span>
+<span class='line-number'>152</span>
+<span class='line-number'>153</span>
+<span class='line-number'>154</span>
+<span class='line-number'>155</span>
+<span class='line-number'>156</span>
+<span class='line-number'>157</span>
+<span class='line-number'>158</span>
+<span class='line-number'>159</span>
+<span class='line-number'>160</span>
+<span class='line-number'>161</span>
+<span class='line-number'>162</span>
+<span class='line-number'>163</span>
+<span class='line-number'>164</span>
+<span class='line-number'>165</span>
+<span class='line-number'>166</span>
+<span class='line-number'>167</span>
+<span class='line-number'>168</span>
+<span class='line-number'>169</span>
+<span class='line-number'>170</span>
+<span class='line-number'>171</span>
+<span class='line-number'>172</span>
+<span class='line-number'>173</span>
+<span class='line-number'>174</span>
+<span class='line-number'>175</span>
+<span class='line-number'>176</span>
+<span class='line-number'>177</span>
+<span class='line-number'>178</span>
+<span class='line-number'>179</span>
+<span class='line-number'>180</span>
+<span class='line-number'>181</span>
+<span class='line-number'>182</span>
+<span class='line-number'>183</span>
+<span class='line-number'>184</span>
+<span class='line-number'>185</span>
+<span class='line-number'>186</span>
+<span class='line-number'>187</span>
+<span class='line-number'>188</span>
+<span class='line-number'>189</span>
+<span class='line-number'>190</span>
+<span class='line-number'>191</span>
+<span class='line-number'>192</span>
+<span class='line-number'>193</span>
+<span class='line-number'>194</span>
+<span class='line-number'>195</span>
+<span class='line-number'>196</span>
+<span class='line-number'>197</span>
+<span class='line-number'>198</span>
+<span class='line-number'>199</span>
+<span class='line-number'>200</span>
+<span class='line-number'>201</span>
+<span class='line-number'>202</span>
+<span class='line-number'>203</span>
+<span class='line-number'>204</span>
+<span class='line-number'>205</span>
+<span class='line-number'>206</span>
+<span class='line-number'>207</span>
+<span class='line-number'>208</span>
+<span class='line-number'>209</span>
+<span class='line-number'>210</span>
+<span class='line-number'>211</span>
+<span class='line-number'>212</span>
+<span class='line-number'>213</span>
+<span class='line-number'>214</span>
+<span class='line-number'>215</span>
+<span class='line-number'>216</span>
+<span class='line-number'>217</span>
+<span class='line-number'>218</span>
+<span class='line-number'>219</span>
+<span class='line-number'>220</span>
+<span class='line-number'>221</span>
+<span class='line-number'>222</span>
+<span class='line-number'>223</span>
+<span class='line-number'>224</span>
+<span class='line-number'>225</span>
+<span class='line-number'>226</span>
+<span class='line-number'>227</span>
+<span class='line-number'>228</span>
+<span class='line-number'>229</span>
+<span class='line-number'>230</span>
+<span class='line-number'>231</span>
+<span class='line-number'>232</span>
+<span class='line-number'>233</span>
+<span class='line-number'>234</span>
+<span class='line-number'>235</span>
+<span class='line-number'>236</span>
+<span class='line-number'>237</span>
+<span class='line-number'>238</span>
+<span class='line-number'>239</span>
+<span class='line-number'>240</span>
+<span class='line-number'>241</span>
+<span class='line-number'>242</span>
+<span class='line-number'>243</span>
+<span class='line-number'>244</span>
+<span class='line-number'>245</span>
+<span class='line-number'>246</span>
+<span class='line-number'>247</span>
+<span class='line-number'>248</span>
+<span class='line-number'>249</span>
+<span class='line-number'>250</span>
+<span class='line-number'>251</span>
+<span class='line-number'>252</span>
+<span class='line-number'>253</span>
+<span class='line-number'>254</span>
+<span class='line-number'>255</span>
+<span class='line-number'>256</span>
+<span class='line-number'>257</span>
+<span class='line-number'>258</span>
+<span class='line-number'>259</span>
+<span class='line-number'>260</span>
+<span class='line-number'>261</span>
+<span class='line-number'>262</span>
+<span class='line-number'>263</span>
+<span class='line-number'>264</span>
+<span class='line-number'>265</span>
+<span class='line-number'>266</span>
+<span class='line-number'>267</span>
+<span class='line-number'>268</span>
+<span class='line-number'>269</span>
+<span class='line-number'>270</span>
+<span class='line-number'>271</span>
+<span class='line-number'>272</span>
+<span class='line-number'>273</span>
+<span class='line-number'>274</span>
+<span class='line-number'>275</span>
+<span class='line-number'>276</span>
+<span class='line-number'>277</span>
+<span class='line-number'>278</span>
+<span class='line-number'>279</span>
+<span class='line-number'>280</span>
+<span class='line-number'>281</span>
+<span class='line-number'>282</span>
+<span class='line-number'>283</span>
+<span class='line-number'>284</span>
+<span class='line-number'>285</span>
+<span class='line-number'>286</span>
+<span class='line-number'>287</span>
+<span class='line-number'>288</span>
+<span class='line-number'>289</span>
+<span class='line-number'>290</span>
+<span class='line-number'>291</span>
+<span class='line-number'>292</span>
+<span class='line-number'>293</span>
+<span class='line-number'>294</span>
+<span class='line-number'>295</span>
+<span class='line-number'>296</span>
+<span class='line-number'>297</span>
+<span class='line-number'>298</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kn">package</span> <span class="n">com</span><span class="o">.</span><span class="na">example</span><span class="o">.</span><span class="na">drivequickstart</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="kn">import</span> <span class="nn">com.google.android.gms.common.ConnectionResult</span><span class="o">;</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">com.google.android.gms.common.GooglePlayServicesUtil</span><span class="o">;</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">com.google.api.client.extensions.android.http.AndroidHttp</span><span class="o">;</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential</span><span class="o">;</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">com.google.api.client.http.HttpTransport</span><span class="o">;</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">com.google.api.client.json.JsonFactory</span><span class="o">;</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">com.google.api.client.json.gson.GsonFactory</span><span class="o">;</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">com.google.api.client.util.ExponentialBackOff</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'><span class="kn">import</span> <span class="nn">com.google.api.services.drive.DriveScopes</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="kn">import</span> <span class="nn">android.accounts.AccountManager</span><span class="o">;</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">android.app.Activity</span><span class="o">;</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">android.app.Dialog</span><span class="o">;</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">android.app.ProgressDialog</span><span class="o">;</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">android.content.Context</span><span class="o">;</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">android.content.Intent</span><span class="o">;</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">android.content.SharedPreferences</span><span class="o">;</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">android.graphics.Typeface</span><span class="o">;</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">android.net.ConnectivityManager</span><span class="o">;</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">android.net.NetworkInfo</span><span class="o">;</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">android.os.Bundle</span><span class="o">;</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">android.text.TextUtils</span><span class="o">;</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">android.text.method.ScrollingMovementMethod</span><span class="o">;</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">android.view.ViewGroup</span><span class="o">;</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">android.widget.LinearLayout</span><span class="o">;</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">android.widget.TextView</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="kn">import</span> <span class="nn">java.util.Arrays</span><span class="o">;</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">java.util.List</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">MainActivity</span> <span class="kd">extends</span> <span class="n">Activity</span> <span class="o">{</span>
+</span><span class='line'>    <span class="cm">/**</span>
+</span><span class='line'><span class="cm">     * A Drive API service object used to access the API.</span>
+</span><span class='line'><span class="cm">     * Note: Do not confuse this class with API library&#39;s model classes, which</span>
+</span><span class='line'><span class="cm">     * represent specific data structures.</span>
+</span><span class='line'><span class="cm">     */</span>
+</span><span class='line'>    <span class="n">com</span><span class="o">.</span><span class="na">google</span><span class="o">.</span><span class="na">api</span><span class="o">.</span><span class="na">services</span><span class="o">.</span><span class="na">drive</span><span class="o">.</span><span class="na">Drive</span> <span class="n">mService</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">GoogleAccountCredential</span> <span class="n">credential</span><span class="o">;</span>
+</span><span class='line'>    <span class="kd">private</span> <span class="n">TextView</span> <span class="n">mStatusText</span><span class="o">;</span>
+</span><span class='line'>    <span class="kd">private</span> <span class="n">TextView</span> <span class="n">mResultsText</span><span class="o">;</span>
+</span><span class='line'>    <span class="n">ProgressDialog</span> <span class="n">mProgress</span><span class="o">;</span>
+</span><span class='line'>    <span class="kd">final</span> <span class="n">HttpTransport</span> <span class="n">transport</span> <span class="o">=</span> <span class="n">AndroidHttp</span><span class="o">.</span><span class="na">newCompatibleTransport</span><span class="o">();</span>
+</span><span class='line'>    <span class="kd">final</span> <span class="n">JsonFactory</span> <span class="n">jsonFactory</span> <span class="o">=</span> <span class="n">GsonFactory</span><span class="o">.</span><span class="na">getDefaultInstance</span><span class="o">();</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="kd">static</span> <span class="kd">final</span> <span class="kt">int</span> <span class="n">REQUEST_ACCOUNT_PICKER</span> <span class="o">=</span> <span class="mi">1000</span><span class="o">;</span>
+</span><span class='line'>    <span class="kd">static</span> <span class="kd">final</span> <span class="kt">int</span> <span class="n">REQUEST_AUTHORIZATION</span> <span class="o">=</span> <span class="mi">1001</span><span class="o">;</span>
+</span><span class='line'>    <span class="kd">static</span> <span class="kd">final</span> <span class="kt">int</span> <span class="n">REQUEST_GOOGLE_PLAY_SERVICES</span> <span class="o">=</span> <span class="mi">1002</span><span class="o">;</span>
+</span><span class='line'>    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">PREF_ACCOUNT_NAME</span> <span class="o">=</span> <span class="s">&quot;accountName&quot;</span><span class="o">;</span>
+</span><span class='line'>    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span><span class="o">[]</span> <span class="n">SCOPES</span> <span class="o">=</span> <span class="o">{</span> <span class="n">DriveScopes</span><span class="o">.</span><span class="na">DRIVE_METADATA_READONLY</span> <span class="o">};</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="cm">/**</span>
+</span><span class='line'><span class="cm">     * Create the main activity.</span>
+</span><span class='line'><span class="cm">     * @param savedInstanceState previously saved instance data.</span>
+</span><span class='line'><span class="cm">     */</span>
+</span><span class='line'>    <span class="nd">@Override</span>
+</span><span class='line'>    <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">onCreate</span><span class="o">(</span><span class="n">Bundle</span> <span class="n">savedInstanceState</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>        <span class="kd">super</span><span class="o">.</span><span class="na">onCreate</span><span class="o">(</span><span class="n">savedInstanceState</span><span class="o">);</span>
+</span><span class='line'>        <span class="n">LinearLayout</span> <span class="n">activityLayout</span> <span class="o">=</span> <span class="k">new</span> <span class="nf">LinearLayout</span><span class="o">(</span><span class="k">this</span><span class="o">);</span>
+</span><span class='line'>        <span class="n">LinearLayout</span><span class="o">.</span><span class="na">LayoutParams</span> <span class="n">lp</span> <span class="o">=</span> <span class="k">new</span> <span class="n">LinearLayout</span><span class="o">.</span><span class="na">LayoutParams</span><span class="o">(</span>
+</span><span class='line'>                <span class="n">LinearLayout</span><span class="o">.</span><span class="na">LayoutParams</span><span class="o">.</span><span class="na">MATCH_PARENT</span><span class="o">,</span>
+</span><span class='line'>                <span class="n">LinearLayout</span><span class="o">.</span><span class="na">LayoutParams</span><span class="o">.</span><span class="na">MATCH_PARENT</span><span class="o">);</span>
+</span><span class='line'>        <span class="n">activityLayout</span><span class="o">.</span><span class="na">setLayoutParams</span><span class="o">(</span><span class="n">lp</span><span class="o">);</span>
+</span><span class='line'>        <span class="n">activityLayout</span><span class="o">.</span><span class="na">setOrientation</span><span class="o">(</span><span class="n">LinearLayout</span><span class="o">.</span><span class="na">VERTICAL</span><span class="o">);</span>
+</span><span class='line'>        <span class="n">activityLayout</span><span class="o">.</span><span class="na">setPadding</span><span class="o">(</span><span class="mi">16</span><span class="o">,</span> <span class="mi">16</span><span class="o">,</span> <span class="mi">16</span><span class="o">,</span> <span class="mi">16</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="n">ViewGroup</span><span class="o">.</span><span class="na">LayoutParams</span> <span class="n">tlp</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ViewGroup</span><span class="o">.</span><span class="na">LayoutParams</span><span class="o">(</span>
+</span><span class='line'>                <span class="n">ViewGroup</span><span class="o">.</span><span class="na">LayoutParams</span><span class="o">.</span><span class="na">WRAP_CONTENT</span><span class="o">,</span>
+</span><span class='line'>                <span class="n">ViewGroup</span><span class="o">.</span><span class="na">LayoutParams</span><span class="o">.</span><span class="na">WRAP_CONTENT</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="n">mStatusText</span> <span class="o">=</span> <span class="k">new</span> <span class="nf">TextView</span><span class="o">(</span><span class="k">this</span><span class="o">);</span>
+</span><span class='line'>        <span class="n">mStatusText</span><span class="o">.</span><span class="na">setLayoutParams</span><span class="o">(</span><span class="n">tlp</span><span class="o">);</span>
+</span><span class='line'>        <span class="n">mStatusText</span><span class="o">.</span><span class="na">setTypeface</span><span class="o">(</span><span class="kc">null</span><span class="o">,</span> <span class="n">Typeface</span><span class="o">.</span><span class="na">BOLD</span><span class="o">);</span>
+</span><span class='line'>        <span class="n">mStatusText</span><span class="o">.</span><span class="na">setText</span><span class="o">(</span><span class="s">&quot;Retrieving data...&quot;</span><span class="o">);</span>
+</span><span class='line'>        <span class="n">activityLayout</span><span class="o">.</span><span class="na">addView</span><span class="o">(</span><span class="n">mStatusText</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="n">mResultsText</span> <span class="o">=</span> <span class="k">new</span> <span class="nf">TextView</span><span class="o">(</span><span class="k">this</span><span class="o">);</span>
+</span><span class='line'>        <span class="n">mResultsText</span><span class="o">.</span><span class="na">setLayoutParams</span><span class="o">(</span><span class="n">tlp</span><span class="o">);</span>
+</span><span class='line'>        <span class="n">mResultsText</span><span class="o">.</span><span class="na">setPadding</span><span class="o">(</span><span class="mi">16</span><span class="o">,</span> <span class="mi">16</span><span class="o">,</span> <span class="mi">16</span><span class="o">,</span> <span class="mi">16</span><span class="o">);</span>
+</span><span class='line'>        <span class="n">mResultsText</span><span class="o">.</span><span class="na">setVerticalScrollBarEnabled</span><span class="o">(</span><span class="kc">true</span><span class="o">);</span>
+</span><span class='line'>        <span class="n">mResultsText</span><span class="o">.</span><span class="na">setMovementMethod</span><span class="o">(</span><span class="k">new</span> <span class="nf">ScrollingMovementMethod</span><span class="o">());</span>
+</span><span class='line'>        <span class="n">activityLayout</span><span class="o">.</span><span class="na">addView</span><span class="o">(</span><span class="n">mResultsText</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="n">mProgress</span> <span class="o">=</span> <span class="k">new</span> <span class="nf">ProgressDialog</span><span class="o">(</span><span class="k">this</span><span class="o">);</span>
+</span><span class='line'>        <span class="n">mProgress</span><span class="o">.</span><span class="na">setMessage</span><span class="o">(</span><span class="s">&quot;Calling Drive API ...&quot;</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="n">setContentView</span><span class="o">(</span><span class="n">activityLayout</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="c1">// Initialize credentials and service object.</span>
+</span><span class='line'>        <span class="n">SharedPreferences</span> <span class="n">settings</span> <span class="o">=</span> <span class="n">getPreferences</span><span class="o">(</span><span class="n">Context</span><span class="o">.</span><span class="na">MODE_PRIVATE</span><span class="o">);</span>
+</span><span class='line'>        <span class="n">credential</span> <span class="o">=</span> <span class="n">GoogleAccountCredential</span><span class="o">.</span><span class="na">usingOAuth2</span><span class="o">(</span>
+</span><span class='line'>                <span class="n">getApplicationContext</span><span class="o">(),</span> <span class="n">Arrays</span><span class="o">.</span><span class="na">asList</span><span class="o">(</span><span class="n">SCOPES</span><span class="o">))</span>
+</span><span class='line'>                <span class="o">.</span><span class="na">setBackOff</span><span class="o">(</span><span class="k">new</span> <span class="nf">ExponentialBackOff</span><span class="o">())</span>
+</span><span class='line'>                <span class="o">.</span><span class="na">setSelectedAccountName</span><span class="o">(</span><span class="n">settings</span><span class="o">.</span><span class="na">getString</span><span class="o">(</span><span class="n">PREF_ACCOUNT_NAME</span><span class="o">,</span> <span class="kc">null</span><span class="o">));</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="n">mService</span> <span class="o">=</span> <span class="k">new</span> <span class="n">com</span><span class="o">.</span><span class="na">google</span><span class="o">.</span><span class="na">api</span><span class="o">.</span><span class="na">services</span><span class="o">.</span><span class="na">drive</span><span class="o">.</span><span class="na">Drive</span><span class="o">.</span><span class="na">Builder</span><span class="o">(</span>
+</span><span class='line'>                <span class="n">transport</span><span class="o">,</span> <span class="n">jsonFactory</span><span class="o">,</span> <span class="n">credential</span><span class="o">)</span>
+</span><span class='line'>                <span class="o">.</span><span class="na">setApplicationName</span><span class="o">(</span><span class="s">&quot;Drive API Android Quickstart&quot;</span><span class="o">)</span>
+</span><span class='line'>                <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>    <span class="cm">/**</span>
+</span><span class='line'><span class="cm">     * Called whenever this activity is pushed to the foreground, such as after</span>
+</span><span class='line'><span class="cm">     * a call to onCreate().</span>
+</span><span class='line'><span class="cm">     */</span>
+</span><span class='line'>    <span class="nd">@Override</span>
+</span><span class='line'>    <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">onResume</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>        <span class="kd">super</span><span class="o">.</span><span class="na">onResume</span><span class="o">();</span>
+</span><span class='line'>        <span class="k">if</span> <span class="o">(</span><span class="n">isGooglePlayServicesAvailable</span><span class="o">())</span> <span class="o">{</span>
+</span><span class='line'>            <span class="n">refreshResults</span><span class="o">();</span>
+</span><span class='line'>        <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+</span><span class='line'>            <span class="n">mStatusText</span><span class="o">.</span><span class="na">setText</span><span class="o">(</span><span class="s">&quot;Google Play Services required: &quot;</span> <span class="o">+</span>
+</span><span class='line'>                    <span class="s">&quot;after installing, close and relaunch this app.&quot;</span><span class="o">);</span>
+</span><span class='line'>        <span class="o">}</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="cm">/**</span>
+</span><span class='line'><span class="cm">     * Called when an activity launched here (specifically, AccountPicker</span>
+</span><span class='line'><span class="cm">     * and authorization) exits, giving you the requestCode you started it with,</span>
+</span><span class='line'><span class="cm">     * the resultCode it returned, and any additional data from it.</span>
+</span><span class='line'><span class="cm">     * @param requestCode code indicating which activity result is incoming.</span>
+</span><span class='line'><span class="cm">     * @param resultCode code indicating the result of the incoming</span>
+</span><span class='line'><span class="cm">     *     activity result.</span>
+</span><span class='line'><span class="cm">     * @param data Intent (containing result data) returned by incoming</span>
+</span><span class='line'><span class="cm">     *     activity result.</span>
+</span><span class='line'><span class="cm">     */</span>
+</span><span class='line'>    <span class="nd">@Override</span>
+</span><span class='line'>    <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">onActivityResult</span><span class="o">(</span>
+</span><span class='line'>            <span class="kt">int</span> <span class="n">requestCode</span><span class="o">,</span> <span class="kt">int</span> <span class="n">resultCode</span><span class="o">,</span> <span class="n">Intent</span> <span class="n">data</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>        <span class="kd">super</span><span class="o">.</span><span class="na">onActivityResult</span><span class="o">(</span><span class="n">requestCode</span><span class="o">,</span> <span class="n">resultCode</span><span class="o">,</span> <span class="n">data</span><span class="o">);</span>
+</span><span class='line'>        <span class="k">switch</span><span class="o">(</span><span class="n">requestCode</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>            <span class="k">case</span> <span class="nl">REQUEST_GOOGLE_PLAY_SERVICES:</span>
+</span><span class='line'>                <span class="k">if</span> <span class="o">(</span><span class="n">resultCode</span> <span class="o">!=</span> <span class="n">RESULT_OK</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>                    <span class="n">isGooglePlayServicesAvailable</span><span class="o">();</span>
+</span><span class='line'>                <span class="o">}</span>
+</span><span class='line'>                <span class="k">break</span><span class="o">;</span>
+</span><span class='line'>            <span class="k">case</span> <span class="nl">REQUEST_ACCOUNT_PICKER:</span>
+</span><span class='line'>                <span class="k">if</span> <span class="o">(</span><span class="n">resultCode</span> <span class="o">==</span> <span class="n">RESULT_OK</span> <span class="o">&amp;&amp;</span> <span class="n">data</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span>
+</span><span class='line'>                        <span class="n">data</span><span class="o">.</span><span class="na">getExtras</span><span class="o">()</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>                    <span class="n">String</span> <span class="n">accountName</span> <span class="o">=</span>
+</span><span class='line'>                            <span class="n">data</span><span class="o">.</span><span class="na">getStringExtra</span><span class="o">(</span><span class="n">AccountManager</span><span class="o">.</span><span class="na">KEY_ACCOUNT_NAME</span><span class="o">);</span>
+</span><span class='line'>                    <span class="k">if</span> <span class="o">(</span><span class="n">accountName</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>                        <span class="n">credential</span><span class="o">.</span><span class="na">setSelectedAccountName</span><span class="o">(</span><span class="n">accountName</span><span class="o">);</span>
+</span><span class='line'>                        <span class="n">SharedPreferences</span> <span class="n">settings</span> <span class="o">=</span>
+</span><span class='line'>                                <span class="n">getPreferences</span><span class="o">(</span><span class="n">Context</span><span class="o">.</span><span class="na">MODE_PRIVATE</span><span class="o">);</span>
+</span><span class='line'>                        <span class="n">SharedPreferences</span><span class="o">.</span><span class="na">Editor</span> <span class="n">editor</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="na">edit</span><span class="o">();</span>
+</span><span class='line'>                        <span class="n">editor</span><span class="o">.</span><span class="na">putString</span><span class="o">(</span><span class="n">PREF_ACCOUNT_NAME</span><span class="o">,</span> <span class="n">accountName</span><span class="o">);</span>
+</span><span class='line'>                        <span class="n">editor</span><span class="o">.</span><span class="na">commit</span><span class="o">();</span>
+</span><span class='line'>                    <span class="o">}</span>
+</span><span class='line'>                <span class="o">}</span> <span class="k">else</span> <span class="nf">if</span> <span class="o">(</span><span class="n">resultCode</span> <span class="o">==</span> <span class="n">RESULT_CANCELED</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>                    <span class="n">mStatusText</span><span class="o">.</span><span class="na">setText</span><span class="o">(</span><span class="s">&quot;Account unspecified.&quot;</span><span class="o">);</span>
+</span><span class='line'>                <span class="o">}</span>
+</span><span class='line'>                <span class="k">break</span><span class="o">;</span>
+</span><span class='line'>            <span class="k">case</span> <span class="nl">REQUEST_AUTHORIZATION:</span>
+</span><span class='line'>                <span class="k">if</span> <span class="o">(</span><span class="n">resultCode</span> <span class="o">!=</span> <span class="n">RESULT_OK</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>                    <span class="n">chooseAccount</span><span class="o">();</span>
+</span><span class='line'>                <span class="o">}</span>
+</span><span class='line'>                <span class="k">break</span><span class="o">;</span>
+</span><span class='line'>        <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="kd">super</span><span class="o">.</span><span class="na">onActivityResult</span><span class="o">(</span><span class="n">requestCode</span><span class="o">,</span> <span class="n">resultCode</span><span class="o">,</span> <span class="n">data</span><span class="o">);</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="cm">/**</span>
+</span><span class='line'><span class="cm">     * Attempt to get a set of data from the Drive API to display. If the</span>
+</span><span class='line'><span class="cm">     * email address isn&#39;t known yet, then call chooseAccount() method so the</span>
+</span><span class='line'><span class="cm">     * user can pick an account.</span>
+</span><span class='line'><span class="cm">     */</span>
+</span><span class='line'>    <span class="kd">private</span> <span class="kt">void</span> <span class="nf">refreshResults</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>        <span class="k">if</span> <span class="o">(</span><span class="n">credential</span><span class="o">.</span><span class="na">getSelectedAccountName</span><span class="o">()</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>            <span class="n">chooseAccount</span><span class="o">();</span>
+</span><span class='line'>        <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+</span><span class='line'>            <span class="k">if</span> <span class="o">(</span><span class="n">isDeviceOnline</span><span class="o">())</span> <span class="o">{</span>
+</span><span class='line'>                <span class="n">mProgress</span><span class="o">.</span><span class="na">show</span><span class="o">();</span>
+</span><span class='line'>                <span class="k">new</span> <span class="nf">ApiAsyncTask</span><span class="o">(</span><span class="k">this</span><span class="o">).</span><span class="na">execute</span><span class="o">();</span>
+</span><span class='line'>            <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+</span><span class='line'>                <span class="n">mStatusText</span><span class="o">.</span><span class="na">setText</span><span class="o">(</span><span class="s">&quot;No network connection available.&quot;</span><span class="o">);</span>
+</span><span class='line'>            <span class="o">}</span>
+</span><span class='line'>        <span class="o">}</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="cm">/**</span>
+</span><span class='line'><span class="cm">     * Clear any existing Drive API data from the TextView and update</span>
+</span><span class='line'><span class="cm">     * the header message; called from background threads and async tasks</span>
+</span><span class='line'><span class="cm">     * that need to update the UI (in the UI thread).</span>
+</span><span class='line'><span class="cm">     */</span>
+</span><span class='line'>    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">clearResultsText</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>        <span class="n">runOnUiThread</span><span class="o">(</span><span class="k">new</span> <span class="nf">Runnable</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>            <span class="nd">@Override</span>
+</span><span class='line'>            <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>                <span class="n">mStatusText</span><span class="o">.</span><span class="na">setText</span><span class="o">(</span><span class="s">&quot;Retrieving data…&quot;</span><span class="o">);</span>
+</span><span class='line'>                <span class="n">mResultsText</span><span class="o">.</span><span class="na">setText</span><span class="o">(</span><span class="s">&quot;&quot;</span><span class="o">);</span>
+</span><span class='line'>            <span class="o">}</span>
+</span><span class='line'>        <span class="o">});</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="cm">/**</span>
+</span><span class='line'><span class="cm">     * Fill the data TextView with the given List of Strings; called from</span>
+</span><span class='line'><span class="cm">     * background threads and async tasks that need to update the UI (in the</span>
+</span><span class='line'><span class="cm">     * UI thread).</span>
+</span><span class='line'><span class="cm">     * @param dataStrings a List of Strings to populate the main TextView with.</span>
+</span><span class='line'><span class="cm">     */</span>
+</span><span class='line'>    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">updateResultsText</span><span class="o">(</span><span class="kd">final</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">dataStrings</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>        <span class="n">runOnUiThread</span><span class="o">(</span><span class="k">new</span> <span class="nf">Runnable</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>            <span class="nd">@Override</span>
+</span><span class='line'>            <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>                <span class="k">if</span> <span class="o">(</span><span class="n">dataStrings</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>                    <span class="n">mStatusText</span><span class="o">.</span><span class="na">setText</span><span class="o">(</span><span class="s">&quot;Error retrieving data!&quot;</span><span class="o">);</span>
+</span><span class='line'>                <span class="o">}</span> <span class="k">else</span> <span class="nf">if</span> <span class="o">(</span><span class="n">dataStrings</span><span class="o">.</span><span class="na">size</span><span class="o">()</span> <span class="o">==</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>                    <span class="n">mStatusText</span><span class="o">.</span><span class="na">setText</span><span class="o">(</span><span class="s">&quot;No data found.&quot;</span><span class="o">);</span>
+</span><span class='line'>                <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+</span><span class='line'>                    <span class="n">mStatusText</span><span class="o">.</span><span class="na">setText</span><span class="o">(</span><span class="s">&quot;Data retrieved using&quot;</span> <span class="o">+</span>
+</span><span class='line'>                            <span class="s">&quot; the Drive API:&quot;</span><span class="o">);</span>
+</span><span class='line'>                    <span class="n">mResultsText</span><span class="o">.</span><span class="na">setText</span><span class="o">(</span><span class="n">TextUtils</span><span class="o">.</span><span class="na">join</span><span class="o">(</span><span class="s">&quot;\n\n&quot;</span><span class="o">,</span> <span class="n">dataStrings</span><span class="o">));</span>
+</span><span class='line'>                <span class="o">}</span>
+</span><span class='line'>            <span class="o">}</span>
+</span><span class='line'>        <span class="o">});</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="cm">/**</span>
+</span><span class='line'><span class="cm">     * Show a status message in the list header TextView; called from background</span>
+</span><span class='line'><span class="cm">     * threads and async tasks that need to update the UI (in the UI thread).</span>
+</span><span class='line'><span class="cm">     * @param message a String to display in the UI header TextView.</span>
+</span><span class='line'><span class="cm">     */</span>
+</span><span class='line'>    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">updateStatus</span><span class="o">(</span><span class="kd">final</span> <span class="n">String</span> <span class="n">message</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>        <span class="n">runOnUiThread</span><span class="o">(</span><span class="k">new</span> <span class="nf">Runnable</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>            <span class="nd">@Override</span>
+</span><span class='line'>            <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>                <span class="n">mStatusText</span><span class="o">.</span><span class="na">setText</span><span class="o">(</span><span class="n">message</span><span class="o">);</span>
+</span><span class='line'>            <span class="o">}</span>
+</span><span class='line'>        <span class="o">});</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="cm">/**</span>
+</span><span class='line'><span class="cm">     * Starts an activity in Google Play Services so the user can pick an</span>
+</span><span class='line'><span class="cm">     * account.</span>
+</span><span class='line'><span class="cm">     */</span>
+</span><span class='line'>    <span class="kd">private</span> <span class="kt">void</span> <span class="nf">chooseAccount</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>        <span class="n">startActivityForResult</span><span class="o">(</span>
+</span><span class='line'>                <span class="n">credential</span><span class="o">.</span><span class="na">newChooseAccountIntent</span><span class="o">(),</span> <span class="n">REQUEST_ACCOUNT_PICKER</span><span class="o">);</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="cm">/**</span>
+</span><span class='line'><span class="cm">     * Checks whether the device currently has a network connection.</span>
+</span><span class='line'><span class="cm">     * @return true if the device has a network connection, false otherwise.</span>
+</span><span class='line'><span class="cm">     */</span>
+</span><span class='line'>    <span class="kd">private</span> <span class="kt">boolean</span> <span class="nf">isDeviceOnline</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>        <span class="n">ConnectivityManager</span> <span class="n">connMgr</span> <span class="o">=</span>
+</span><span class='line'>                <span class="o">(</span><span class="n">ConnectivityManager</span><span class="o">)</span> <span class="n">getSystemService</span><span class="o">(</span><span class="n">Context</span><span class="o">.</span><span class="na">CONNECTIVITY_SERVICE</span><span class="o">);</span>
+</span><span class='line'>        <span class="n">NetworkInfo</span> <span class="n">networkInfo</span> <span class="o">=</span> <span class="n">connMgr</span><span class="o">.</span><span class="na">getActiveNetworkInfo</span><span class="o">();</span>
+</span><span class='line'>        <span class="k">return</span> <span class="o">(</span><span class="n">networkInfo</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">networkInfo</span><span class="o">.</span><span class="na">isConnected</span><span class="o">());</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="cm">/**</span>
+</span><span class='line'><span class="cm">     * Check that Google Play services APK is installed and up to date. Will</span>
+</span><span class='line'><span class="cm">     * launch an error dialog for the user to update Google Play Services if</span>
+</span><span class='line'><span class="cm">     * possible.</span>
+</span><span class='line'><span class="cm">     * @return true if Google Play Services is available and up to</span>
+</span><span class='line'><span class="cm">     *     date on this device; false otherwise.</span>
+</span><span class='line'><span class="cm">     */</span>
+</span><span class='line'>    <span class="kd">private</span> <span class="kt">boolean</span> <span class="nf">isGooglePlayServicesAvailable</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>        <span class="kd">final</span> <span class="kt">int</span> <span class="n">connectionStatusCode</span> <span class="o">=</span>
+</span><span class='line'>                <span class="n">GooglePlayServicesUtil</span><span class="o">.</span><span class="na">isGooglePlayServicesAvailable</span><span class="o">(</span><span class="k">this</span><span class="o">);</span>
+</span><span class='line'>        <span class="k">if</span> <span class="o">(</span><span class="n">GooglePlayServicesUtil</span><span class="o">.</span><span class="na">isUserRecoverableError</span><span class="o">(</span><span class="n">connectionStatusCode</span><span class="o">))</span> <span class="o">{</span>
+</span><span class='line'>            <span class="n">showGooglePlayServicesAvailabilityErrorDialog</span><span class="o">(</span><span class="n">connectionStatusCode</span><span class="o">);</span>
+</span><span class='line'>            <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+</span><span class='line'>        <span class="o">}</span> <span class="k">else</span> <span class="nf">if</span> <span class="o">(</span><span class="n">connectionStatusCode</span> <span class="o">!=</span> <span class="n">ConnectionResult</span><span class="o">.</span><span class="na">SUCCESS</span> <span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>            <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+</span><span class='line'>        <span class="o">}</span>
+</span><span class='line'>        <span class="k">return</span> <span class="kc">true</span><span class="o">;</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="cm">/**</span>
+</span><span class='line'><span class="cm">     * Display an error dialog showing that Google Play Services is missing</span>
+</span><span class='line'><span class="cm">     * or out of date.</span>
+</span><span class='line'><span class="cm">     * @param connectionStatusCode code describing the presence (or lack of)</span>
+</span><span class='line'><span class="cm">     *     Google Play Services on this device.</span>
+</span><span class='line'><span class="cm">     */</span>
+</span><span class='line'>    <span class="kt">void</span> <span class="nf">showGooglePlayServicesAvailabilityErrorDialog</span><span class="o">(</span>
+</span><span class='line'>            <span class="kd">final</span> <span class="kt">int</span> <span class="n">connectionStatusCode</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>        <span class="n">runOnUiThread</span><span class="o">(</span><span class="k">new</span> <span class="nf">Runnable</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>            <span class="nd">@Override</span>
+</span><span class='line'>            <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>                <span class="n">Dialog</span> <span class="n">dialog</span> <span class="o">=</span> <span class="n">GooglePlayServicesUtil</span><span class="o">.</span><span class="na">getErrorDialog</span><span class="o">(</span>
+</span><span class='line'>                        <span class="n">connectionStatusCode</span><span class="o">,</span>
+</span><span class='line'>                        <span class="n">MainActivity</span><span class="o">.</span><span class="na">this</span><span class="o">,</span>
+</span><span class='line'>                        <span class="n">REQUEST_GOOGLE_PLAY_SERVICES</span><span class="o">);</span>
+</span><span class='line'>                <span class="n">dialog</span><span class="o">.</span><span class="na">show</span><span class="o">();</span>
+</span><span class='line'>            <span class="o">}</span>
+</span><span class='line'>        <span class="o">});</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>ApiAsyncTask.java</li>
+</ul>
+
+
+<figure class='code'><figcaption><span>ApiAsyncTask.java </span></figcaption>
+<div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+<span class='line-number'>59</span>
+<span class='line-number'>60</span>
+<span class='line-number'>61</span>
+<span class='line-number'>62</span>
+<span class='line-number'>63</span>
+<span class='line-number'>64</span>
+<span class='line-number'>65</span>
+<span class='line-number'>66</span>
+<span class='line-number'>67</span>
+<span class='line-number'>68</span>
+<span class='line-number'>69</span>
+<span class='line-number'>70</span>
+<span class='line-number'>71</span>
+<span class='line-number'>72</span>
+<span class='line-number'>73</span>
+<span class='line-number'>74</span>
+<span class='line-number'>75</span>
+<span class='line-number'>76</span>
+<span class='line-number'>77</span>
+<span class='line-number'>78</span>
+<span class='line-number'>79</span>
+<span class='line-number'>80</span>
+<span class='line-number'>81</span>
+<span class='line-number'>82</span>
+<span class='line-number'>83</span>
+<span class='line-number'>84</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kn">package</span> <span class="n">com</span><span class="o">.</span><span class="na">example</span><span class="o">.</span><span class="na">drivequickstart</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="cm">/**</span>
+</span><span class='line'><span class="cm"> * Created by dell11 on 2015/9/19.</span>
+</span><span class='line'><span class="cm"> */</span>
+</span><span class='line'>
+</span><span class='line'><span class="kn">import</span> <span class="nn">android.os.AsyncTask</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="kn">import</span> <span class="nn">com.google.api.client.googleapis.extensions.android.gms.auth.GooglePlayServicesAvailabilityIOException</span><span class="o">;</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException</span><span class="o">;</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">com.google.api.services.drive.model.File</span><span class="o">;</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">com.google.api.services.drive.model.FileList</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'><span class="kn">import</span> <span class="nn">java.io.IOException</span><span class="o">;</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">java.util.ArrayList</span><span class="o">;</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">java.util.List</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="cm">/**</span>
+</span><span class='line'><span class="cm"> * An asynchronous task that handles the Drive API call.</span>
+</span><span class='line'><span class="cm"> * Placing the API calls in their own task ensures the UI stays responsive.</span>
+</span><span class='line'><span class="cm"> */</span>
+</span><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">ApiAsyncTask</span> <span class="kd">extends</span> <span class="n">AsyncTask</span><span class="o">&lt;</span><span class="n">Void</span><span class="o">,</span> <span class="n">Void</span><span class="o">,</span> <span class="n">Void</span><span class="o">&gt;</span> <span class="o">{</span>
+</span><span class='line'>    <span class="kd">private</span> <span class="n">MainActivity</span> <span class="n">mActivity</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="cm">/**</span>
+</span><span class='line'><span class="cm">     * Constructor.</span>
+</span><span class='line'><span class="cm">     * @param activity MainActivity that spawned this task.</span>
+</span><span class='line'><span class="cm">     */</span>
+</span><span class='line'>    <span class="n">ApiAsyncTask</span><span class="o">(</span><span class="n">MainActivity</span> <span class="n">activity</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>        <span class="k">this</span><span class="o">.</span><span class="na">mActivity</span> <span class="o">=</span> <span class="n">activity</span><span class="o">;</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="cm">/**</span>
+</span><span class='line'><span class="cm">     * Background task to call Drive API.</span>
+</span><span class='line'><span class="cm">     * @param params no parameters needed for this task.</span>
+</span><span class='line'><span class="cm">     */</span>
+</span><span class='line'>    <span class="nd">@Override</span>
+</span><span class='line'>    <span class="kd">protected</span> <span class="n">Void</span> <span class="nf">doInBackground</span><span class="o">(</span><span class="n">Void</span><span class="o">...</span> <span class="n">params</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>        <span class="k">try</span> <span class="o">{</span>
+</span><span class='line'>            <span class="n">mActivity</span><span class="o">.</span><span class="na">clearResultsText</span><span class="o">();</span>
+</span><span class='line'>            <span class="n">mActivity</span><span class="o">.</span><span class="na">updateResultsText</span><span class="o">(</span><span class="n">getDataFromApi</span><span class="o">());</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="kd">final</span> <span class="n">GooglePlayServicesAvailabilityIOException</span> <span class="n">availabilityException</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>            <span class="n">mActivity</span><span class="o">.</span><span class="na">showGooglePlayServicesAvailabilityErrorDialog</span><span class="o">(</span>
+</span><span class='line'>                    <span class="n">availabilityException</span><span class="o">.</span><span class="na">getConnectionStatusCode</span><span class="o">());</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">UserRecoverableAuthIOException</span> <span class="n">userRecoverableException</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>            <span class="n">mActivity</span><span class="o">.</span><span class="na">startActivityForResult</span><span class="o">(</span>
+</span><span class='line'>                    <span class="n">userRecoverableException</span><span class="o">.</span><span class="na">getIntent</span><span class="o">(),</span>
+</span><span class='line'>                    <span class="n">MainActivity</span><span class="o">.</span><span class="na">REQUEST_AUTHORIZATION</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>            <span class="n">mActivity</span><span class="o">.</span><span class="na">updateStatus</span><span class="o">(</span><span class="s">&quot;The following error occurred:\n&quot;</span> <span class="o">+</span>
+</span><span class='line'>                    <span class="n">e</span><span class="o">.</span><span class="na">getMessage</span><span class="o">());</span>
+</span><span class='line'>        <span class="o">}</span>
+</span><span class='line'>        <span class="k">if</span> <span class="o">(</span><span class="n">mActivity</span><span class="o">.</span><span class="na">mProgress</span><span class="o">.</span><span class="na">isShowing</span><span class="o">())</span> <span class="o">{</span>
+</span><span class='line'>            <span class="n">mActivity</span><span class="o">.</span><span class="na">mProgress</span><span class="o">.</span><span class="na">dismiss</span><span class="o">();</span>
+</span><span class='line'>        <span class="o">}</span>
+</span><span class='line'>        <span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="cm">/**</span>
+</span><span class='line'><span class="cm">     * Fetch a list of up to 10 file names and IDs.</span>
+</span><span class='line'><span class="cm">     * @return List of Strings describing files, or an empty list if no files</span>
+</span><span class='line'><span class="cm">     *         found.</span>
+</span><span class='line'><span class="cm">     * @throws IOException</span>
+</span><span class='line'><span class="cm">     */</span>
+</span><span class='line'>    <span class="kd">private</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="nf">getDataFromApi</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">IOException</span> <span class="o">{</span>
+</span><span class='line'>        <span class="c1">// Get a list of up to 10 files.</span>
+</span><span class='line'>        <span class="n">List</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">fileInfo</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ArrayList</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;();</span>
+</span><span class='line'>        <span class="n">FileList</span> <span class="n">result</span> <span class="o">=</span> <span class="n">mActivity</span><span class="o">.</span><span class="na">mService</span><span class="o">.</span><span class="na">files</span><span class="o">().</span><span class="na">list</span><span class="o">()</span>
+</span><span class='line'>                <span class="o">.</span><span class="na">setMaxResults</span><span class="o">(</span><span class="mi">20</span><span class="o">)</span>
+</span><span class='line'>                <span class="o">.</span><span class="na">execute</span><span class="o">();</span>
+</span><span class='line'>        <span class="n">List</span><span class="o">&lt;</span><span class="n">File</span><span class="o">&gt;</span> <span class="n">files</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="na">getItems</span><span class="o">();</span>
+</span><span class='line'>        <span class="k">if</span> <span class="o">(</span><span class="n">files</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>            <span class="k">for</span> <span class="o">(</span><span class="n">File</span> <span class="n">file</span> <span class="o">:</span> <span class="n">files</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>                <span class="n">fileInfo</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">String</span><span class="o">.</span><span class="na">format</span><span class="o">(</span><span class="s">&quot;%s (%s)\n&quot;</span><span class="o">,</span>
+</span><span class='line'>                        <span class="n">file</span><span class="o">.</span><span class="na">getTitle</span><span class="o">(),</span> <span class="n">file</span><span class="o">.</span><span class="na">getId</span><span class="o">()));</span>
+</span><span class='line'>            <span class="o">}</span>
+</span><span class='line'>        <span class="o">}</span>
+</span><span class='line'>        <span class="k">return</span> <span class="n">fileInfo</span><span class="o">;</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>然後就可以執行囉，這個app不能執行在虛擬機上，執行的Device必須要有Google Service，執行結果是把你的google drive的前十項名字列出來，這就是個很簡易的Android google drive 應用程式了。不過當然不只要這樣，我們還想要很多很多的功能，要怎麼實作呢，這邊提供一個別人寫的demo，裡面把該如何使用google drive的方法都寫好了，詳細請點連結吧 —><a href="https://github.com/googledrive/android-demos">連結在此</a></p>
+
+<p>我follow google的教學寫的google drive quick start也放到github了，想要的也可以點連結 —><a href="https://github.com/hank5000/googledrive-quickstart/tree/master">連結在此</a>，只是我比較背骨的把 Company Domain改成 com.example.dell11.googledrive，如果你要使用記得開啟Google API時的套件名稱要寫對.</p>
+
+		
+		
+	</div>
+
+
+<div class="meta">
+	<div class="date">
+
+
+
+
+Sep 22nd, 2015</div>
+	<div class="tags">
+
+
+	<a class='category' href='/blog/categories/android/'>android</a>, <a class='category' href='/blog/categories/googledrive/'>googledrive</a>
+
+
+</div>
+	
+	<div class="comments"><a href="/blog/2015/09/22/googledrive/#disqus_thread">Comments</a></div>
+	
+</div>
+</article>
 
 
     <article class="post">
