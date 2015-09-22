@@ -4,7 +4,7 @@
   <title><![CDATA[The Coding Life]]></title>
   <link href="http://hank5000.github.io/atom.xml" rel="self"/>
   <link href="http://hank5000.github.io/"/>
-  <updated>2015-09-22T00:45:44+08:00</updated>
+  <updated>2015-09-23T00:39:37+08:00</updated>
   <id>http://hank5000.github.io/</id>
   <author>
     <name><![CDATA[Hank Wu]]></name>
@@ -955,9 +955,265 @@ dependencies {
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>然後就可以執行囉，這個app不能執行在虛擬機上，執行的Device必須要有Google Service，執行結果是把你的google drive的前十項名字列出來，這就是個很簡易的Android google drive 應用程式了。不過當然不只要這樣，我們還想要很多很多的功能，要怎麼實作呢，這邊提供一個別人寫的demo，裡面把該如何使用google drive的方法都寫好了，詳細請點連結吧 —><a href="https://github.com/googledrive/android-demos">連結在此</a></p>
+<p>然後就可以執行囉，這個app不能執行在虛擬機上，執行的Device必須要有Google Service，執行結果是把你的google drive的前十項名字列出來，這就是個很簡易的Android google drive 應用程式了，這個app就是很單純的去你的google drive拿到前20項檔案名稱然後寫在螢幕上。</p>
 
-<p>我follow google的教學寫的google drive quick start也放到github了，想要的也可以點連結 —><a href="https://github.com/hank5000/googledrive-quickstart/tree/master">連結在此</a>，只是我比較背骨的把 Company Domain改成 com.example.dell11.googledrive，如果你要使用記得開啟Google API時的套件名稱要寫對.</p>
+<p>如果要其功能完整，在Google Developer中都可以找到些方法，這邊提供上傳檔案的function.</p>
+
+<p><strong>上傳檔案</strong>要使用下面這function，出處還是 <a href="https://developers.google.com/drive/v2/reference/files/insert">google developer</a>&hellip;..</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'>  <span class="cm">/**</span>
+</span><span class='line'><span class="cm">   * Insert new file.</span>
+</span><span class='line'><span class="cm">   *</span>
+</span><span class='line'><span class="cm">   * @param service Drive API service instance.</span>
+</span><span class='line'><span class="cm">   * @param title Title of the file to insert, including the extension.</span>
+</span><span class='line'><span class="cm">   * @param description Description of the file to insert.</span>
+</span><span class='line'><span class="cm">   * @param parentId Optional parent folder&#39;s ID.</span>
+</span><span class='line'><span class="cm">   * @param mimeType MIME type of the file to insert.</span>
+</span><span class='line'><span class="cm">   * @param filename Filename of the file to insert.</span>
+</span><span class='line'><span class="cm">   * @return Inserted file metadata if successful, {@code null} otherwise.</span>
+</span><span class='line'><span class="cm">   */</span>
+</span><span class='line'>  <span class="kd">private</span> <span class="kd">static</span> <span class="n">File</span> <span class="nf">insertFile</span><span class="o">(</span><span class="n">Drive</span> <span class="n">service</span><span class="o">,</span> <span class="n">String</span> <span class="n">title</span><span class="o">,</span> <span class="n">String</span> <span class="n">description</span><span class="o">,</span>
+</span><span class='line'>      <span class="n">String</span> <span class="n">parentId</span><span class="o">,</span> <span class="n">String</span> <span class="n">mimeType</span><span class="o">,</span> <span class="n">String</span> <span class="n">filename</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>    <span class="c1">// File&#39;s metadata.</span>
+</span><span class='line'>    <span class="n">File</span> <span class="n">body</span> <span class="o">=</span> <span class="k">new</span> <span class="nf">File</span><span class="o">();</span>
+</span><span class='line'>    <span class="n">body</span><span class="o">.</span><span class="na">setTitle</span><span class="o">(</span><span class="n">title</span><span class="o">);</span>
+</span><span class='line'>    <span class="n">body</span><span class="o">.</span><span class="na">setDescription</span><span class="o">(</span><span class="n">description</span><span class="o">);</span>
+</span><span class='line'>    <span class="n">body</span><span class="o">.</span><span class="na">setMimeType</span><span class="o">(</span><span class="n">mimeType</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1">// Set the parent folder.</span>
+</span><span class='line'>    <span class="k">if</span> <span class="o">(</span><span class="n">parentId</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">parentId</span><span class="o">.</span><span class="na">length</span><span class="o">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>      <span class="n">body</span><span class="o">.</span><span class="na">setParents</span><span class="o">(</span>
+</span><span class='line'>          <span class="n">Arrays</span><span class="o">.</span><span class="na">asList</span><span class="o">(</span><span class="k">new</span> <span class="nf">ParentReference</span><span class="o">().</span><span class="na">setId</span><span class="o">(</span><span class="n">parentId</span><span class="o">)));</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1">// File&#39;s content.</span>
+</span><span class='line'>    <span class="n">java</span><span class="o">.</span><span class="na">io</span><span class="o">.</span><span class="na">File</span> <span class="n">fileContent</span> <span class="o">=</span> <span class="k">new</span> <span class="n">java</span><span class="o">.</span><span class="na">io</span><span class="o">.</span><span class="na">File</span><span class="o">(</span><span class="n">filename</span><span class="o">);</span>
+</span><span class='line'>    <span class="n">FileContent</span> <span class="n">mediaContent</span> <span class="o">=</span> <span class="k">new</span> <span class="nf">FileContent</span><span class="o">(</span><span class="n">mimeType</span><span class="o">,</span> <span class="n">fileContent</span><span class="o">);</span>
+</span><span class='line'>    <span class="k">try</span> <span class="o">{</span>
+</span><span class='line'>      <span class="n">File</span> <span class="n">file</span> <span class="o">=</span> <span class="n">service</span><span class="o">.</span><span class="na">files</span><span class="o">().</span><span class="na">insert</span><span class="o">(</span><span class="n">body</span><span class="o">,</span> <span class="n">mediaContent</span><span class="o">).</span><span class="na">execute</span><span class="o">();</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="c1">// Uncomment the following line to print the File ID.</span>
+</span><span class='line'>      <span class="c1">// System.out.println(&quot;File ID: &quot; + file.getId());</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="k">return</span> <span class="n">file</span><span class="o">;</span>
+</span><span class='line'>    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IOException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>      <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;An error occured: &quot;</span> <span class="o">+</span> <span class="n">e</span><span class="o">);</span>
+</span><span class='line'>      <span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>  <span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>再來實現MediaHttpUploaderProgressListener，就可以知道現在<strong>上傳的狀態</strong>，function如下：</p>
+
+<figure class='code'><figcaption><span>UploaderProgressListener </span></figcaption>
+<div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">private</span> <span class="kd">class</span> <span class="nc">FileUploadProgressListener</span> <span class="kd">implements</span> <span class="n">MediaHttpUploaderProgressListener</span> <span class="o">{</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="kd">private</span> <span class="n">String</span> <span class="n">mFileUploadedName</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="kd">public</span> <span class="nf">FileUploadProgressListener</span><span class="o">(</span><span class="n">String</span> <span class="n">fileName</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>        <span class="n">mFileUploadedName</span> <span class="o">=</span> <span class="n">fileName</span><span class="o">;</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="nd">@Override</span>
+</span><span class='line'>    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">progressChanged</span><span class="o">(</span><span class="n">MediaHttpUploader</span> <span class="n">mediaHttpUploader</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">IOException</span> <span class="o">{</span>
+</span><span class='line'>        <span class="k">if</span> <span class="o">(</span><span class="n">mediaHttpUploader</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="k">return</span><span class="o">;</span>
+</span><span class='line'>        <span class="k">switch</span> <span class="o">(</span><span class="n">mediaHttpUploader</span><span class="o">.</span><span class="na">getUploadState</span><span class="o">())</span> <span class="o">{</span>
+</span><span class='line'>            <span class="k">case</span> <span class="nl">INITIATION_STARTED:</span>
+</span><span class='line'>            <span class="c1">//System.out.println(&quot;Initiation has started!&quot;);</span>
+</span><span class='line'>                <span class="k">break</span><span class="o">;</span>
+</span><span class='line'>            <span class="k">case</span> <span class="nl">INITIATION_COMPLETE:</span>
+</span><span class='line'>            <span class="c1">//System.out.println(&quot;Initiation is complete!&quot;);</span>
+</span><span class='line'>                <span class="k">break</span><span class="o">;</span>
+</span><span class='line'>            <span class="k">case</span> <span class="nl">MEDIA_IN_PROGRESS:</span>
+</span><span class='line'>                <span class="kt">double</span> <span class="n">percent</span> <span class="o">=</span> <span class="n">mediaHttpUploader</span><span class="o">.</span><span class="na">getProgress</span><span class="o">()</span> <span class="o">*</span> <span class="mi">100</span><span class="o">;</span>
+</span><span class='line'>                <span class="n">Log</span><span class="o">.</span><span class="na">d</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">&quot;Upload to GoogleDrive: &quot;</span> <span class="o">+</span> <span class="n">mFileUploadedName</span> <span class="o">+</span> <span class="s">&quot; - &quot;</span> <span class="o">+</span> <span class="n">String</span><span class="o">.</span><span class="na">valueOf</span><span class="o">(</span><span class="n">percent</span><span class="o">)</span> <span class="o">+</span> <span class="s">&quot;%&quot;</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'>                <span class="k">break</span><span class="o">;</span>
+</span><span class='line'>            <span class="k">case</span> <span class="nl">MEDIA_COMPLETE:</span>
+</span><span class='line'>
+</span><span class='line'>            <span class="c1">//System.out.println(&quot;Upload is complete!&quot;);</span>
+</span><span class='line'>        <span class="o">}</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>有了這個Listener之後要把他放到insertFile這個function中，我們改寫一下insertFile()，這邊說明一下insertFile要輸入的值，假設我們要上傳的檔案絕對路徑為 &ldquo;/sdcard/Download/<font color='red'>log.txt</font>” ：</p>
+
+<ul>
+<li>service ：就是google drive quick start 中的mService</li>
+</ul>
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">mService</span> <span class="o">=</span> <span class="k">new</span> <span class="n">com</span><span class="o">.</span><span class="na">google</span><span class="o">.</span><span class="na">api</span><span class="o">.</span><span class="na">services</span><span class="o">.</span><span class="na">drive</span><span class="o">.</span><span class="na">Drive</span><span class="o">.</span><span class="na">Builder</span><span class="o">(</span>
+</span><span class='line'>                <span class="n">transport</span><span class="o">,</span> <span class="n">jsonFactory</span><span class="o">,</span> <span class="n">credential</span><span class="o">)</span>
+</span><span class='line'>                <span class="o">.</span><span class="na">setApplicationName</span><span class="o">(</span><span class="s">&quot;Drive API Android Quickstart&quot;</span><span class="o">)</span>
+</span><span class='line'>                <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li><p>title ：上傳之後的檔名，一般就是使用 “<font color='red'>log.txt</font>” (對應filename)</p></li>
+<li><p>description ：上傳之後的描述，不會影響什麼東西&hellip;</p></li>
+<li><p>parentId ：資料夾的名稱，如果是根目錄就填 null</p></li>
+<li><p>mimeType ：如果你title的extension給對應該就可以直接下null了.</p></li>
+<li><p>filename ：這邊應該要下檔案路徑，"/sdcard/Download/log.txt"</p></li>
+</ul>
+
+
+<p>大致上就是這樣。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">private</span> <span class="kd">static</span> <span class="n">File</span> <span class="nf">insertFile</span><span class="o">(</span><span class="n">Drive</span> <span class="n">service</span><span class="o">,</span> <span class="n">String</span> <span class="n">title</span><span class="o">,</span> <span class="n">String</span> <span class="n">description</span><span class="o">,</span>
+</span><span class='line'>      <span class="n">String</span> <span class="n">parentId</span><span class="o">,</span> <span class="n">String</span> <span class="n">mimeType</span><span class="o">,</span> <span class="n">String</span> <span class="n">filename</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>    <span class="c1">// File&#39;s metadata.</span>
+</span><span class='line'>    <span class="n">File</span> <span class="n">body</span> <span class="o">=</span> <span class="k">new</span> <span class="nf">File</span><span class="o">();</span>
+</span><span class='line'>    <span class="n">body</span><span class="o">.</span><span class="na">setTitle</span><span class="o">(</span><span class="n">title</span><span class="o">);</span>
+</span><span class='line'>    <span class="n">body</span><span class="o">.</span><span class="na">setDescription</span><span class="o">(</span><span class="n">description</span><span class="o">);</span>
+</span><span class='line'>    <span class="n">body</span><span class="o">.</span><span class="na">setMimeType</span><span class="o">(</span><span class="n">mimeType</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1">// Set the parent folder.</span>
+</span><span class='line'>    <span class="k">if</span> <span class="o">(</span><span class="n">parentId</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">parentId</span><span class="o">.</span><span class="na">length</span><span class="o">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>      <span class="n">body</span><span class="o">.</span><span class="na">setParents</span><span class="o">(</span>
+</span><span class='line'>          <span class="n">Arrays</span><span class="o">.</span><span class="na">asList</span><span class="o">(</span><span class="k">new</span> <span class="nf">ParentReference</span><span class="o">().</span><span class="na">setId</span><span class="o">(</span><span class="n">parentId</span><span class="o">)));</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1">// File&#39;s content.</span>
+</span><span class='line'>    <span class="n">java</span><span class="o">.</span><span class="na">io</span><span class="o">.</span><span class="na">File</span> <span class="n">fileContent</span> <span class="o">=</span> <span class="k">new</span> <span class="n">java</span><span class="o">.</span><span class="na">io</span><span class="o">.</span><span class="na">File</span><span class="o">(</span><span class="n">filename</span><span class="o">);</span>
+</span><span class='line'>    <span class="n">FileContent</span> <span class="n">mediaContent</span> <span class="o">=</span> <span class="k">new</span> <span class="nf">FileContent</span><span class="o">(</span><span class="n">mimeType</span><span class="o">,</span> <span class="n">fileContent</span><span class="o">);</span>
+</span><span class='line'>    <span class="k">try</span> <span class="o">{</span>
+</span><span class='line'>      <span class="n">Drive</span><span class="o">.</span><span class="na">Files</span><span class="o">.</span><span class="na">Insert</span> <span class="n">insert</span> <span class="o">=</span> <span class="n">service</span><span class="o">.</span><span class="na">files</span><span class="o">().</span><span class="na">insert</span><span class="o">(</span><span class="n">body</span><span class="o">,</span> <span class="n">mediaContent</span><span class="o">)</span>
+</span><span class='line'>      <span class="n">MediaHttpUploader</span> <span class="n">uploader</span> <span class="o">=</span> <span class="n">insert</span><span class="o">.</span><span class="na">getMediaHttpUploader</span><span class="o">();</span>
+</span><span class='line'>      
+</span><span class='line'>    <span class="n">uploader</span><span class="o">.</span><span class="na">setChunkSize</span><span class="o">(</span><span class="mi">1024</span><span class="o">*</span><span class="mi">1024</span><span class="o">);</span>
+</span><span class='line'>    <span class="n">uploader</span><span class="o">.</span><span class="na">setProgressListener</span><span class="o">(</span><span class="k">new</span> <span class="nf">FileUploadProgressListener</span><span class="o">(</span><span class="n">filename</span><span class="o">));</span>
+</span><span class='line'>    <span class="n">com</span><span class="o">.</span><span class="na">google</span><span class="o">.</span><span class="na">api</span><span class="o">.</span><span class="na">services</span><span class="o">.</span><span class="na">drive</span><span class="o">.</span><span class="na">model</span><span class="o">.</span><span class="na">File</span> <span class="n">f</span> <span class="o">=</span> <span class="n">insert</span><span class="o">.</span><span class="na">execute</span><span class="o">();</span>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>      <span class="c1">// Uncomment the following line to print the File ID.</span>
+</span><span class='line'>      <span class="c1">// System.out.println(&quot;File ID: &quot; + file.getId());</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="k">return</span> <span class="n">file</span><span class="o">;</span>
+</span><span class='line'>    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IOException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>      <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;An error occured: &quot;</span> <span class="o">+</span> <span class="n">e</span><span class="o">);</span>
+</span><span class='line'>      <span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>  <span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Code中的setChunkSize反應出來就是他大概每次分多少bytes上傳，然後每次上傳一個Chunk，Listener就會被Call一次，
+應該可以直接在Listener中用UI thread更新progress bar，目前的code只有先把他印出來而已。</p>
+
+<p>Google Drive api 的部分大致上就是這樣囉，有什麼問題都歡迎討論.</p>
 ]]></content>
   </entry>
   
