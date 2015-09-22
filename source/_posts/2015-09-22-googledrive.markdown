@@ -510,6 +510,157 @@ public class ApiAsyncTask extends AsyncTask<Void, Void, Void> {
 }
 {% endcodeblock %}
 
-然後就可以執行囉，這個app不能執行在虛擬機上，執行的Device必須要有Google Service，執行結果是把你的google drive的前十項名字列出來，這就是個很簡易的Android google drive 應用程式了。不過當然不只要這樣，我們還想要很多很多的功能，要怎麼實作呢，這邊提供一個別人寫的demo，裡面把該如何使用google drive的方法都寫好了，詳細請點連結吧 —>[連結在此](https://github.com/googledrive/android-demos)
+然後就可以執行囉，這個app不能執行在虛擬機上，執行的Device必須要有Google Service，執行結果是把你的google drive的前十項名字列出來，這就是個很簡易的Android google drive 應用程式了，這個app就是很單純的去你的google drive拿到前20項檔案名稱然後寫在螢幕上。
 
-我follow google的教學寫的google drive quick start也放到github了，想要的也可以點連結 —>[連結在此](https://github.com/hank5000/googledrive-quickstart/tree/master)，只是我比較背骨的把 Company Domain改成 com.example.dell11.googledrive，如果你要使用記得開啟Google API時的套件名稱要寫對.
+如果要其功能完整，在Google Developer中都可以找到些方法，這邊提供上傳檔案的function.
+
+**上傳檔案**要使用下面這function，出處還是 [google developer](https://developers.google.com/drive/v2/reference/files/insert).....
+
+{% codeblock lang:java %}
+
+  /**
+   * Insert new file.
+   *
+   * @param service Drive API service instance.
+   * @param title Title of the file to insert, including the extension.
+   * @param description Description of the file to insert.
+   * @param parentId Optional parent folder's ID.
+   * @param mimeType MIME type of the file to insert.
+   * @param filename Filename of the file to insert.
+   * @return Inserted file metadata if successful, {@code null} otherwise.
+   */
+  private static File insertFile(Drive service, String title, String description,
+      String parentId, String mimeType, String filename) {
+    // File's metadata.
+    File body = new File();
+    body.setTitle(title);
+    body.setDescription(description);
+    body.setMimeType(mimeType);
+
+    // Set the parent folder.
+    if (parentId != null && parentId.length() > 0) {
+      body.setParents(
+          Arrays.asList(new ParentReference().setId(parentId)));
+    }
+
+    // File's content.
+    java.io.File fileContent = new java.io.File(filename);
+    FileContent mediaContent = new FileContent(mimeType, fileContent);
+    try {
+      File file = service.files().insert(body, mediaContent).execute();
+
+      // Uncomment the following line to print the File ID.
+      // System.out.println("File ID: " + file.getId());
+
+      return file;
+    } catch (IOException e) {
+      System.out.println("An error occured: " + e);
+      return null;
+    }
+  }  
+
+{% endcodeblock %}
+
+再來實現MediaHttpUploaderProgressListener，就可以知道現在**上傳的狀態**，function如下：
+
+{% codeblock lang:java UploaderProgressListener %}
+
+private class FileUploadProgressListener implements MediaHttpUploaderProgressListener {
+
+    private String mFileUploadedName;
+
+    public FileUploadProgressListener(String fileName) {
+        mFileUploadedName = fileName;
+    }
+
+    @Override
+    public void progressChanged(MediaHttpUploader mediaHttpUploader) throws IOException {
+        if (mediaHttpUploader == null) return;
+        switch (mediaHttpUploader.getUploadState()) {
+            case INITIATION_STARTED:
+            //System.out.println("Initiation has started!");
+                break;
+            case INITIATION_COMPLETE:
+            //System.out.println("Initiation is complete!");
+                break;
+            case MEDIA_IN_PROGRESS:
+                double percent = mediaHttpUploader.getProgress() * 100;
+                Log.d(TAG, "Upload to GoogleDrive: " + mFileUploadedName + " - " + String.valueOf(percent) + "%");
+    
+                break;
+            case MEDIA_COMPLETE:
+            
+            //System.out.println("Upload is complete!");
+        }
+    }
+}
+
+{% endcodeblock%}
+
+有了這個Listener之後要把他放到insertFile這個function中，我們改寫一下insertFile()，這邊說明一下insertFile要輸入的值，假設我們要上傳的檔案絕對路徑為 "/sdcard/Download/<font color='red'>log.txt</font>” ：
+
+- service ：就是google drive quick start 中的mService
+
+{% codeblock lang:java %}
+mService = new com.google.api.services.drive.Drive.Builder(
+                transport, jsonFactory, credential)
+                .setApplicationName("Drive API Android Quickstart")
+                .build();
+{% endcodeblock %}
+
+- title ：上傳之後的檔名，一般就是使用 “<font color='red'>log.txt</font>” (對應filename)
+
+- description ：上傳之後的描述，不會影響什麼東西...
+
+- parentId ：資料夾的名稱，如果是根目錄就填 null
+
+- mimeType ：如果你title的extension給對應該就可以直接下null了.
+
+- filename ：這邊應該要下檔案路徑，"/sdcard/Download/log.txt"
+
+大致上就是這樣。
+
+
+{% codeblock lang:java %}
+private static File insertFile(Drive service, String title, String description,
+      String parentId, String mimeType, String filename) {
+    // File's metadata.
+    File body = new File();
+    body.setTitle(title);
+    body.setDescription(description);
+    body.setMimeType(mimeType);
+
+    // Set the parent folder.
+    if (parentId != null && parentId.length() > 0) {
+      body.setParents(
+          Arrays.asList(new ParentReference().setId(parentId)));
+    }
+
+    // File's content.
+    java.io.File fileContent = new java.io.File(filename);
+    FileContent mediaContent = new FileContent(mimeType, fileContent);
+    try {
+      Drive.Files.Insert insert = service.files().insert(body, mediaContent)
+      MediaHttpUploader uploader = insert.getMediaHttpUploader();
+	  	  
+	  uploader.setChunkSize(1024*1024);
+	  uploader.setProgressListener(new FileUploadProgressListener(filename));
+	  com.google.api.services.drive.model.File f = insert.execute();
+
+
+      // Uncomment the following line to print the File ID.
+      // System.out.println("File ID: " + file.getId());
+
+      return file;
+    } catch (IOException e) {
+      System.out.println("An error occured: " + e);
+      return null;
+    }
+  }
+{% endcodeblock %}
+
+Code中的setChunkSize反應出來就是他大概每次分多少bytes上傳，然後每次上傳一個Chunk，Listener就會被Call一次，
+應該可以直接在Listener中用UI thread更新progress bar，目前的code只有先把他印出來而已。
+
+
+Google Drive api 的部分大致上就是這樣囉，有什麼問題都歡迎討論.
