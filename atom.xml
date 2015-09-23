@@ -4,7 +4,7 @@
   <title><![CDATA[The Coding Life]]></title>
   <link href="http://hank5000.github.io/atom.xml" rel="self"/>
   <link href="http://hank5000.github.io/"/>
-  <updated>2015-09-23T00:39:37+08:00</updated>
+  <updated>2015-09-23T16:51:10+08:00</updated>
   <id>http://hank5000.github.io/</id>
   <author>
     <name><![CDATA[Hank Wu]]></name>
@@ -1212,6 +1212,8 @@ dependencies {
 
 <p>Code中的setChunkSize反應出來就是他大概每次分多少bytes上傳，然後每次上傳一個Chunk，Listener就會被Call一次，
 應該可以直接在Listener中用UI thread更新progress bar，目前的code只有先把他印出來而已。</p>
+
+<p>我這邊也寫了一個簡單的upload到google drive的app <a href="https://github.com/hank5000/GoogleDriveUpload">GoogleDriveUpload</a>，結合了Quick start然後再加上Upload按鍵，使用的人記得要把app的名稱改成你的才可以使用喔.</p>
 
 <p>Google Drive api 的部分大致上就是這樣囉，有什麼問題都歡迎討論.</p>
 ]]></content>
