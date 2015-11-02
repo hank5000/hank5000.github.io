@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: callback | The Coding Life]]></title>
+  <link href="http://hank5000.github.io/blog/categories/callback/atom.xml" rel="self"/>
+  <link href="http://hank5000.github.io/"/>
+  <updated>2015-11-03T01:26:13+08:00</updated>
+  <id>http://hank5000.github.io/</id>
+  <author>
+    <name><![CDATA[Hank Wu]]></name>
+    <email><![CDATA[hankwuwu@gmail.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[JNI C register java callback]]></title>
+    <link href="http://hank5000.github.io/blog/2015/11/02/jni-register-callback/"/>
+    <updated>2015-11-02T23:15:38+08:00</updated>
+    <id>http://hank5000.github.io/blog/2015/11/02/jni-register-callback</id>
+    <content type="html"><![CDATA[<hr />
+
+<p>Java可以透過JNI去跟其他語言溝通，這邊要介紹跟Ｃ溝通的一種情境，這篇不是教人如何使用JNI去Call C的function，而是<strong>反過來想要使用C 去 Call Java 的function</strong>，而且還是當作Callback的情況下使用。</p>
+
+<p>（今天你想要開發一個Java library, 但是你已經有C版本的library了，你現在想要使用C library當作核心，多寫一份JNI的code讓他可以延伸到Java的世界來，這時候有些callback function要接到java去就可以使用這種方法）</p>
+
+<p>我在改Google的AppRTC的時候看到了libjingle_peerconnection.jar中有個DataChannel的Class 其中有個Interface是Observer，這個Observer是要留給使用者實作，而這個Observer中的</p>
+
+<ol>
+<li>onMessage是在接收到DataChannel的資料的時候會被Call到</li>
+<li>onStateChange是在DataChannel的狀態有改變的時候會被Call到</li>
+</ol>
+
+
+<p>使用者要自行去Implement這個DataChannel.Observer，畢竟開發Library的人不知道你想要在DataChannel狀態改變的時候做什麼跟你想要把接收到的資料做什麼，所以就留了一個空間讓大家去發揮。</p>
+
+<p>然而在implement完這個DataChannel.Observer的時候，我要如何去告知底層的C，跟他說Callback function設定成我Implement好的這個DataChannel.Observer Class呢。</p>
+
+<p>這邊就使用了registerObserver這個function，這個function其實最後是通道了native，把implement好的實體帶往C，讓C記住之後，當C要用的時候就Call就好了想法就這麼簡單。</p>
+
+<p>( Note: libjingle_peerconnection.jar只是libjingle.so在java層的一層殼子，所有的事情都是在native中完成，然後再通知java這邊做些應對，所以必須要跟native層說java層這邊準備好了什麼你記得來Call，用Interface的原因是因為要限制接口的樣子，畢竟他是library，使用者要依照他的形式下去使用。)</p>
+
+<p>下面大概描述一下我上網查資料查到的相關寫法：</p>
+
+<p><figure class='code'><figcaption><span>library_name.java</span></figcaption>
+<div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">library_name</span> <span class="o">{</span>
+</span><span class='line'>    <span class="kd">static</span> <span class="o">{</span>
+</span><span class='line'>        <span class="c1">// if library .so is named &amp;lsquo;libname.so&amp;rsquo;</span>
+</span><span class='line'>        <span class="n">System</span><span class="o">.</span><span class="na">loadLibrary</span><span class="o">(&amp;</span><span class="n">ldquo</span><span class="o">;</span><span class="n">name</span><span class="o">&amp;</span><span class="n">rdquo</span><span class="o">;)</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>    <span class="c1">//跟Native註冊interface_name實體的Native function.</span>
+</span><span class='line'>    <span class="kd">private</span> <span class="kd">native</span> <span class="nf">registerInterfaceNameNative</span><span class="o">(</span><span class="n">interface_name</span> <span class="n">var1</span><span class="o">);&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="c1">//假設有一個叫做interface_name的 Interface</span>
+</span><span class='line'><span class="kd">public</span> <span class="n">Interface</span> <span class="n">interface_name</span> <span class="o">{</span>
+</span><span class='line'>    <span class="kt">void</span> <span class="nf">interface_func</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]);</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'><span class="c1">//java的接口，負責把interface_name的實體帶給Native function.</span>
+</span><span class='line'><span class="kd">public</span> <span class="kt">void</span> <span class="nf">registerInterfaceName</span><span class="o">(</span><span class="n">interface_name</span> <span class="n">var1</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>    <span class="n">registerInterfaceNameNative</span><span class="o">(</span><span class="n">var1</span><span class="o">);</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;}</span>
+</span></code></pre></td></tr></table></div></figure></p>
+
+<p><figure class='code'><figcaption><span>library_jni.c</span></figcaption>
+<div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+</pre></td><td class='code'><pre><code class='C'><span class='line'><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="k">static</span> <span class="n">JavaVM</span> <span class="o">*</span><span class="n">gJavaVM</span><span class="p">;</span>
+</span><span class='line'><span class="n">jobject</span> <span class="n">callback_obj</span><span class="p">;</span>
+</span><span class='line'><span class="n">jmethodID</span> <span class="n">callback_mid</span><span class="p">;</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="n">JNIEXPORT</span> <span class="n">jint</span> <span class="n">JNICALL</span> <span class="n">Java_com_XXXXX_library_name_somethingInitFunction</span><span class="p">(</span><span class="n">JNIEnv</span><span class="o">&lt;</span><span class="n">em</span><span class="o">&gt;</span> <span class="n">env</span><span class="p">,</span> <span class="n">jobject</span> <span class="n">obj</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="p">(</span><span class="o">&lt;/</span><span class="n">em</span><span class="o">&gt;</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">GetJavaVM</span><span class="p">(</span><span class="n">env</span><span class="p">,</span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="n">gJavaVM</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="n">JNIEXPORT</span> <span class="n">jint</span> <span class="n">JNICALL</span> <span class="n">Java_com_XXXXX_library_name_registerInterfaceNameNative</span><span class="p">(</span><span class="n">JNIEnv</span><span class="o">&lt;</span><span class="n">em</span><span class="o">&gt;</span> <span class="n">env</span><span class="p">,</span> <span class="n">jobject</span> <span class="n">obj</span><span class="p">,</span> <span class="n">jobject</span> <span class="n">instance</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">callback_obj</span> <span class="o">=</span> <span class="p">(</span><span class="o">&lt;/</span><span class="n">em</span><span class="o">&gt;</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">NewGlobalRef</span><span class="p">(</span><span class="n">env</span><span class="p">,</span><span class="n">instance</span><span class="p">);</span>
+</span><span class='line'>    <span class="n">jclass</span> <span class="n">clz</span> <span class="o">=</span> <span class="p">(</span><span class="o">&lt;</span><span class="n">em</span><span class="o">&gt;</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">GetObjectClass</span><span class="p">(</span><span class="n">env</span><span class="p">,</span><span class="n">callback_obj</span><span class="p">);</span>
+</span><span class='line'>    <span class="k">if</span><span class="p">(</span><span class="n">clz</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="c1">//failed to find class</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>    <span class="n">callback_mid</span> <span class="o">=</span> <span class="p">(</span><span class="o">&lt;/</span><span class="n">em</span><span class="o">&gt;</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">GetMethodID</span><span class="p">(</span><span class="n">env</span><span class="p">,</span><span class="n">clz</span><span class="p">,</span><span class="o">&amp;</span><span class="n">ldquo</span><span class="p">;</span><span class="n">interface_func</span><span class="o">&amp;</span><span class="n">rdquo</span><span class="p">;,</span><span class="o">&amp;</span><span class="n">ldquo</span><span class="p">;([</span><span class="n">B</span><span class="p">)</span><span class="n">V</span><span class="o">&amp;</span><span class="n">rdquo</span><span class="p">;);</span>
+</span><span class='line'><span class="p">}</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="c1">// callback function in C</span>
+</span><span class='line'><span class="kt">void</span> <span class="n">cb_function</span><span class="p">(</span><span class="kt">char</span><span class="o">&lt;</span><span class="n">em</span><span class="o">&gt;</span> <span class="n">buf</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">JNIEnv</span> <span class="o">&lt;/</span><span class="n">em</span><span class="o">&gt;</span><span class="n">env</span><span class="p">;</span>
+</span><span class='line'>    <span class="k">if</span><span class="p">((</span><span class="o">&lt;</span><span class="n">em</span><span class="o">&gt;</span><span class="n">gJavaVM</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">AttachCurrentThread</span><span class="p">(</span><span class="n">gJavaVM</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="n">env</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">)</span> <span class="o">!=</span> <span class="n">JNI_OK</span><span class="p">)</span>  <span class="p">{</span>
+</span><span class='line'>        <span class="c1">// attachCurrentThread() failed.</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>    <span class="k">else</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>          <span class="c1">// create byte[]</span>
+</span><span class='line'>        <span class="n">jbyteArray</span> <span class="n">arr</span> <span class="o">=</span> <span class="p">(</span><span class="o">&lt;/</span><span class="n">em</span><span class="o">&gt;</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">NewByteArray</span><span class="p">(</span><span class="n">env</span><span class="p">,</span><span class="n">len</span><span class="p">);</span>
+</span><span class='line'>        <span class="c1">// set buf -&gt; byte[]</span>
+</span><span class='line'>        <span class="p">(</span><span class="o">&lt;</span><span class="n">em</span><span class="o">&gt;</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">SetByteArrayRegion</span><span class="p">(</span><span class="n">env</span><span class="p">,</span><span class="n">arr</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="n">len</span><span class="p">,</span> <span class="p">(</span><span class="n">jbyte</span><span class="o">&lt;/</span><span class="n">em</span><span class="o">&gt;</span><span class="p">)</span><span class="n">buf</span><span class="p">);</span>
+</span><span class='line'>        <span class="c1">// call java function, which is implemented by user</span>
+</span><span class='line'>        <span class="p">(</span><span class="o">*</span><span class="n">env</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">CallVoidMethod</span><span class="p">(</span><span class="n">env</span><span class="p">,</span><span class="n">callback_obj</span><span class="p">,</span><span class="n">callback_mid</span><span class="p">,</span><span class="n">arr</span><span class="p">);</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'><span class="p">}</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
+</span></code></pre></td></tr></table></div></figure></p>
+
+<p>實際使用上，要先實作 library_name.interface_name 然後把實作好的實體new出來後從registerInterfaceName一路帶下去給C.</p>
+
+<p>大概會長成這樣</p>
+
+<p><figure class='code'><figcaption><span>used_library.java</span></figcaption>
+<div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="kd">public</span> <span class="kd">class</span> <span class="nc">interfaceImpl</span> <span class="kd">implements</span> <span class="n">library_name</span><span class="o">.</span><span class="na">interface_name</span> <span class="o">{</span>
+</span><span class='line'>    <span class="nd">@Override</span>
+</span><span class='line'>    <span class="kt">void</span> <span class="nf">interface_func</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">a</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>        <span class="c1">// show new String(a);</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'><span class="o">}&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span> <span class="n">main</span> <span class="o">{</span>
+</span><span class='line'>    <span class="n">library_name</span> <span class="n">library</span> <span class="o">=</span> <span class="k">new</span> <span class="nf">library_name</span><span class="o">();</span>
+</span><span class='line'>    <span class="c1">// init library</span>
+</span><span class='line'>    <span class="n">library</span><span class="o">.</span><span class="na">registerInterfaceName</span><span class="o">(</span><span class="k">new</span> <span class="nf">interfaceImpl</span><span class="o">());&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;...</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;}</span>
+</span></code></pre></td></tr></table></div></figure></p>
+
+<p>這樣就可以透過註冊的方式設定Native C可以用自己implement的Interface callback回來囉.</p>
+
+<p>大致上是這樣子使用，我也還在學習中，那就這樣囉 :)</p>
+
+<p>如果有問題歡迎交流:D</p>
+]]></content>
+  </entry>
+  
+</feed>
