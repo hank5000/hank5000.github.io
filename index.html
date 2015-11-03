@@ -108,7 +108,7 @@
 
 <p>( Note: libjingle_peerconnection.jar只是libjingle.so在java層的一層殼子，所有的事情都是在native中完成，然後再通知java這邊做些應對，所以必須要跟native層說java層這邊準備好了什麼你記得來Call，用Interface的原因是因為要限制接口的樣子，畢竟他是library，使用者要依照他的形式下去使用。)</p>
 
-<p>下面大概描述一下我上網查資料查到的相關寫法：</p>
+<p>下面大概描述一下要如何使用這樣的機制：</p>
 
 <figure class='code'><figcaption><span>library_name.java</span></figcaption>
 <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
@@ -239,6 +239,9 @@
 <span class='line-number'>12</span>
 <span class='line-number'>13</span>
 <span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
 </pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">interfaceImpl</span> <span class="kd">implements</span> <span class="n">library_name</span><span class="o">.</span><span class="na">interface_name</span> <span class="o">{</span>
 </span><span class='line'>  <span class="nd">@Override</span>
 </span><span class='line'>  <span class="kt">void</span> <span class="nf">interface_func</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">a</span><span class="o">)</span> <span class="o">{</span>
@@ -248,7 +251,10 @@
 </span><span class='line'>
 </span><span class='line'> <span class="n">main</span> <span class="o">{</span>
 </span><span class='line'>  <span class="n">library_name</span> <span class="n">library</span> <span class="o">=</span> <span class="k">new</span> <span class="nf">library_name</span><span class="o">();</span>
-</span><span class='line'>  <span class="c1">// init library</span>
+</span><span class='line'>  <span class="c1">// call some function to init library</span>
+</span><span class='line'>  <span class="c1">// ...</span>
+</span><span class='line'>  
+</span><span class='line'>  <span class="c1">//這行最重要，要把implmenet完的實體送下去給Native層知道</span>
 </span><span class='line'>  <span class="n">library</span><span class="o">.</span><span class="na">registerInterfaceName</span><span class="o">(</span><span class="k">new</span> <span class="nf">interfaceImpl</span><span class="o">());</span>
 </span><span class='line'>
 </span><span class='line'>  <span class="o">...</span>
@@ -258,7 +264,7 @@
 
 <p>這樣就可以透過註冊的方式設定Native C可以用自己implement的Interface callback回來囉.</p>
 
-<p>大致上是這樣子使用，我也還在學習中，那就這樣囉 :)</p>
+<p>大致上是這樣子使用，我也還在學習中，</p>
 
 <p>如果有問題歡迎交流:D</p>
 
