@@ -24,7 +24,7 @@ Java可以透過JNI去跟其他語言溝通，這邊要介紹跟Ｃ溝通的一�
 
 ( Note: libjingle_peerconnection.jar只是libjingle.so在java層的一層殼子，所有的事情都是在native中完成，然後再通知java這邊做些應對，所以必須要跟native層說java層這邊準備好了什麼你記得來Call，用Interface的原因是因為要限制接口的樣子，畢竟他是library，使用者要依照他的形式下去使用。)
 
-下面大概描述一下我上網查資料查到的相關寫法：
+下面大概描述一下要如何使用這樣的機制：
 
 {% codeblock lang:java library_name.java%}
 public class library_name {
@@ -100,7 +100,10 @@ public class interfaceImpl implements library_name.interface_name {
 
  main {
 	library_name library = new library_name();
-	// init library
+	// call some function to init library
+	// ...
+	
+	//這行最重要，要把implmenet完的實體送下去給Native層知道
 	library.registerInterfaceName(new interfaceImpl());
 
 	...
@@ -109,8 +112,7 @@ public class interfaceImpl implements library_name.interface_name {
 
 這樣就可以透過註冊的方式設定Native C可以用自己implement的Interface callback回來囉.
 
-
-大致上是這樣子使用，我也還在學習中，那就這樣囉 :)
+大致上是這樣子使用，我也還在學習中，
 
 如果有問題歡迎交流:D
 
