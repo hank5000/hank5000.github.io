@@ -7,7 +7,7 @@
 	<meta name="author" content="Hank Wu">
 
 	
-	<meta name="description" content=" Mar 31st, 2017 Comments ">
+	<meta name="description" content="最近拿Socket.io來實做Signaling Server, 做為WebRTC連接前溝通的信令伺服器, 這篇就來紀錄一下整個過程. 先來一些簡單小問題解惑: 1. 什麼是WebRTC呢？ 其實之前有寫過一篇 Learn AppRTC/WebRTC 可以先看看. 他有包含三個部份： &hellip;">
 	
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
@@ -83,10 +83,97 @@
 		
 		<a href="/blog/2017/03/31/webrtc-lian-jie-qian-jiao-hu-shi-zuo/">
 		
-			WebRTC 連接前交互實做</a>
+			實做Signaling Server與WebRTC 連接前之交互流程</a>
 	</h2>
 	<div class="entry-content">
-		
+		<p>最近拿Socket.io來實做Signaling Server, 做為WebRTC連接前溝通的信令伺服器, 這篇就來紀錄一下整個過程.</p>
+
+<h4>先來一些簡單小問題解惑:</h4>
+
+<h3>1. 什麼是WebRTC呢？</h3>
+
+<p>其實之前有寫過一篇 <a href="http://hank5000.github.io/blog/2015/09/15/learn-apprtc-slash-webrtc/">Learn AppRTC/WebRTC</a> 可以先看看.</p>
+
+<h4>他有包含三個部份：</h4>
+
+<ol>
+<li>RTCPeerConnection, 主要是在建立雙方連接的API, 連接完後就會使用下面兩個API傳輸資料</li>
+<li>Network Stream API, 設定傳輸媒體流使用(Video/Audio)</li>
+<li>Peer-to-Peer Data API, 這邊就是你可以拿來傳送資料的API, 在這條路上你要傳送什麼隨便你.
+最重要的就是RTCPeerConnection在Android上就是PeerConnection這個Class</li>
+</ol>
+
+
+<h3>2. Signaling Server作用是什麼?</h3>
+
+<ol>
+<li>因為WebRTC是一種P2P概念的東西, 在剛開始雙方要連線時, 根本不認識對方, 也不知道對方在何處, 所以中間一定要有一台Server幫雙方建立剛開始相互認識的橋樑</li>
+<li>深入一點說, 這邊Signaling Server要幫兩台設備轉傳一些資料, 例如 SessionDescription (SDP), Ice candidate&hellip;這些轉傳完兩台設備就會互向認識, 互相跨越對方防火牆, 但不是所有NAT Type都試用, 若至少有一人是NAT Type 4 (對稱型的NAT)的話就必須要多一台Turn Server, 不然基本上Stun Server就夠了.</li>
+</ol>
+
+
+<h3>3. 為什麼會拿Socket.io來實做Signaling Server呢?</h3>
+
+<ol>
+<li>因為他的Library非常好上手, 而且有支持各個平台(瀏覽器/IOS/Android/&hellip;), 所以就拿來玩玩看, 這邊是使用Socket.io官方提供的<a href="https://github.com/socketio/socket.io/tree/master/examples/chat">Chat Demo</a>來改, 有興趣也可以去玩玩看這個Demo很好玩.</li>
+<li>另外我實在懶的去找其他的工具來用了&hellip;</li>
+</ol>
+
+
+<hr />
+
+<h3>開始我們的主題,</h3>
+
+<p>先講一下WebRTC要怎麼樣雙方才會對上.
+首先有兩個Peer, 假設是Peer A 跟 Peer B好了</p>
+
+<p>總是有個人會先上線吧?</p>
+
+<h4>Peer A 先上線了!!</h4>
+
+<ol>
+<li>Peer A call createOffer.</li>
+<li>Peer A 等待onCreateSuccess</li>
+<li>Peer A 等到onCreateSuccess後會拿到 SDP, 把SDP 拿去setLocalSdp.( 自己的嘛, 當然是setLocal囉)</li>
+<li>Peer A 把Sdp送到<strong>server</strong>上放著</li>
+<li>Peer A 收集onIceCandidate的IceCandidates, 然後等待Peer B出現</li>
+</ol>
+
+
+<h4>Peer B上線了!!!</h4>
+
+<ol>
+<li>Peer B 到Server上找尋Peer A的身影, 拿取Sdp, 將Sdp拿去setRemoteSdp(別人的嘛, 當然是setRemote囉)</li>
+<li>因為Peer B已經拿到Offer了, 要給點回應 所以 call createAnswer
+並且等待onCreateSucess</li>
+<li>Peer B有Offer Sdp了想要更進一步拿到Peer A的IceCandidates, 於是發訊息跟Server請Peer A把IceCandidates都透過Server送過來</li>
+<li>等待Peer B收到Peer A的IceCandidates把他全部addIceCandidate.</li>
+<li>Peer B 等到onCreateSuccess後也會拿到Sdp, 把Sdp拿去setLocalSdp. 並且透過Server送給Peer A,  Peer A收到後要 setRemoteSdp.</li>
+<li>Peer B 在onIceCandidate時將IceCandidate透過Server轉發給Peer A, 然後Peer A要 addIceCandidate.</li>
+</ol>
+
+
+<h4>接下來兩個人就不用在透過Server了&hellip;(Server表示傷心)</h4>
+
+<hr />
+
+<p>理論上是還有一台Server要幫忙配對, 這台在官方就叫做Room Server,兩個人進同一間房間就是一種配對, 這邊直接在Signaling Server中讓雙方都帶同一個username去取代這間事情.</p>
+
+<figure class='code'><figcaption><span>link_text:asdfsdf</span></figcaption>
+<div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Fixnum</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">prime?</span>
+</span><span class='line'>    <span class="p">(</span><span class="s1">&#39;1&#39;</span> <span class="o">*</span> <span class="nb">self</span><span class="p">)</span> <span class="o">!~</span> <span class="sr">/^1?$|^(11+?)\1+$/</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
 
 		
 		
