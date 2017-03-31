@@ -4,7 +4,7 @@
   <title><![CDATA[Category: callback | The Coding Life]]></title>
   <link href="http://hank5000.github.io/blog/categories/callback/atom.xml" rel="self"/>
   <link href="http://hank5000.github.io/"/>
-  <updated>2015-11-03T14:16:05+08:00</updated>
+  <updated>2017-03-31T16:10:37+08:00</updated>
   <id>http://hank5000.github.io/</id>
   <author>
     <name><![CDATA[Hank Wu]]></name>
@@ -36,7 +36,7 @@
 
 <p>然而在implement完這個DataChannel.Observer的時候，我要如何去告知底層的C，跟他說Callback function設定成我Implement好的這個DataChannel.Observer Class呢。</p>
 
-<p>這邊就使用了registerObserver這個function，這個function其實最後是通道了native，把implement好的實體帶往C，讓C記住之後，當C要用的時候就Call就好了想法就這麼簡單。</p>
+<p>這邊就使用了registerObserver這個function，這個function其實最後是通到了native，把implement好的實體帶往C，讓C記住之後，當C要用的時候就Call就好了想法就這麼簡單。</p>
 
 <p>( Note: libjingle_peerconnection.jar只是libjingle.so在java層的一層殼子，所有的事情都是在native中完成，然後再通知java這邊做些應對，所以必須要跟native層說java層這邊準備好了什麼你記得來Call，用Interface的原因是因為要限制接口的樣子，畢竟他是library，使用者要依照他的形式下去使用。)</p>
 
